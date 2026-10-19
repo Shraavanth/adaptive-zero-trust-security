@@ -4,15 +4,51 @@
 
 :root {
   color-scheme: dark;
+  font-synthesis: none;
+  text-rendering: optimizeLegibility;
 }
 
 body {
   margin: 0;
-  background-color: #0b0f17;
+  min-width: 320px;
+  background-color: #080d17;
   color: #f1f5f9;
   font-family: 'Inter', system-ui, -apple-system, sans-serif;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
+}
+
+button,
+input,
+select,
+textarea {
+  font: inherit;
+}
+
+button,
+a,
+input,
+select,
+textarea {
+  -webkit-tap-highlight-color: transparent;
+}
+
+button:focus-visible,
+a:focus-visible,
+input:focus-visible,
+select:focus-visible,
+textarea:focus-visible {
+  outline: 2px solid #60a5fa;
+  outline-offset: 2px;
+}
+
+.soc-main {
+  background-color: #080d17;
+  background-image:
+    radial-gradient(ellipse at 18% 0%, rgb(37 99 235 / 8%), transparent 36%),
+    linear-gradient(rgb(148 163 184 / 2%) 1px, transparent 1px),
+    linear-gradient(90deg, rgb(148 163 184 / 2%) 1px, transparent 1px);
+  background-size: auto, 36px 36px, 36px 36px;
 }
 
 /* Custom SOC scrollbars */
@@ -57,4 +93,15 @@ body {
 
 .radar-live {
   animation: radar-pulse 2s infinite ease-in-out;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    scroll-behavior: auto !important;
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
 }

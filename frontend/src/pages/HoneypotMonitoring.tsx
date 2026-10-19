@@ -38,7 +38,7 @@ export const HoneypotMonitoring: React.FC = () => {
             Autonomous Decoy & Honeypot Monitoring
           </h2>
           <p className="text-soc-dim mt-0.5">
-            Active threat diversion traps: Phishing credential decoys, SSH bastions, and DNS poison sinkholes.
+            Seeded decoy records and interaction logs. No HTTP, SSH, DNS, or Telnet listener is started by this application.
           </p>
         </div>
         <button
@@ -58,7 +58,7 @@ export const HoneypotMonitoring: React.FC = () => {
               <span className={`px-2 py-0.5 rounded text-[10px] font-bold ${
                 hp.status === 'ALERTING'
                   ? 'bg-rose-950 text-rose-300 border border-rose-800 animate-pulse'
-                  : 'bg-emerald-950 text-emerald-300 border border-emerald-800'
+                  : 'bg-cyan-950 text-cyan-300 border border-cyan-800'
               }`}>
                 {hp.status}
               </span>

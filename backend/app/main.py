@@ -42,6 +42,7 @@ async def lifespan(app: FastAPI):
 
     db = SessionLocal()
     try:
+        settings_router.load_persisted_settings(db)
         seed_default_honeypots(db)
     finally:
         db.close()

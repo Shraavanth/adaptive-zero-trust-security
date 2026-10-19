@@ -248,6 +248,35 @@ export interface Investigation {
   updated_at: string;
 }
 
+export interface IncidentTimelineEntry {
+  timestamp: string;
+  record_type: 'DETECTION' | 'PACKET' | 'TRUST' | 'POLICY' | 'RESPONSE';
+  title: string;
+  detail: string;
+  status?: string | null;
+}
+
+export interface IncidentEvidence {
+  event: SecurityEvent;
+  packet?: Packet | null;
+  trust_history: TrustHistory[];
+  policy_decisions: ZeroTrustDecision[];
+  response_actions: ResponseAction[];
+  timeline: IncidentTimelineEntry[];
+}
+
+export interface ResponsePreview {
+  target_entity: string;
+  action_type: ResponseAction['action_type'];
+  execution_mode: 'SIMULATED';
+  requested_operation: string;
+  reason: string;
+  would_mutate_state: false;
+  affected_local_records: string[];
+  rollback_action?: string | null;
+  rollback_limitations: string;
+}
+
 export interface DiagnosticsData {
   backend_status: string;
   database_status: string;

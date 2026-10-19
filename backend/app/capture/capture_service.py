@@ -3,6 +3,7 @@ import threading
 import time
 import datetime
 import random
+import logging
 from typing import Optional, Dict, Any, List, Callable
 from collections import deque
 from sqlalchemy.orm import Session
@@ -22,6 +23,8 @@ from app.policies.repeat_offender import record_qualifying_incident
 from app.response.response_engine import execute_response_action
 from app.flows.flow_aggregator import process_packet_into_flow
 from app.core.config import settings
+
+logger = logging.getLogger("capture_service")
 
 class CaptureService:
     _instance = None
@@ -87,6 +90,13 @@ class CaptureService:
         """
         Starts packet capture safely. If already capturing on the same interface, returns active session.
         """
+        if mode == "CONTROLLED_LAB":
+            raise ValueError(
+                "Continuous lab capture is unavailable because no lab endpoints are configured; run an explicit scenario instead."
+            )
+        if mode not in ("LIVE_CAPTURE", "SIMULATED_TEST"):
+            raise ValueError(f"Unsupported capture mode: {mode}")
+
         if self.is_capturing:
             if self.current_interface == interface and self.current_mode == mode:
                 return {"status": "ALREADY_RUNNING", "session_id": self.active_session_id}
@@ -97,7 +107,14 @@ class CaptureService:
         self.active_session_id = session_id
         self.current_interface = interface
         self.current_mode = mode
-        self.is_capturing = True
+        self.stats.update({
+            "total_packets": 0,
+            "packets_per_sec": 0,
+            "malicious_packets": 0,
+            "clean_packets": 0
+        })
+        self._last_sec_count = 0
+        self._last_sec_time = time.time()
 
         # Persist session in DB
         db = SessionLocal()
@@ -111,22 +128,12 @@ class CaptureService:
                 total_packets=0
             )
             db.add(session_model)
-
-            audit = AuditLog(
-                id=f"AUD-{uuid.uuid4().hex[:12].upper()}",
-                timestamp=datetime.datetime.utcnow(),
-                action="CAPTURE_STARTED",
-                actor="OPERATOR",
-                category="CAPTURE",
-                target=interface,
-                details=f"Packet capture session started in {mode} mode on interface {interface}.",
-                status="SUCCESS"
-            )
-            db.add(audit)
             db.commit()
         finally:
             db.close()
 
+        self.is_capturing = True
+        startup_error = None
         if mode == "LIVE_CAPTURE":
             tshark_bin = find_tshark_executable()
             if tshark_bin:
@@ -143,18 +150,61 @@ class CaptureService:
                         packet_callback=self._handle_raw_packet,
                         bpf_filter=bpf_filter
                     )
-                    self.engine.start()
+                    if not self.engine.start():
+                        startup_error = self.engine.error_message or "Scapy capture engine failed to start."
             else:
                 self.engine = ScapyCaptureEngine(
                     interface=interface,
                     packet_callback=self._handle_raw_packet,
                     bpf_filter=bpf_filter
                 )
-                self.engine.start()
+                if not self.engine.start():
+                    startup_error = self.engine.error_message or "Scapy capture engine failed to start."
 
-        elif mode in ("SIMULATED_TEST", "CONTROLLED_LAB"):
+        elif mode == "SIMULATED_TEST":
             self.sim_thread = threading.Thread(target=self._run_simulation_worker, daemon=True)
             self.sim_thread.start()
+
+        if startup_error:
+            self.is_capturing = False
+            if self.engine:
+                self.engine.stop()
+                self.engine = None
+            self.active_session_id = None
+            self.current_interface = None
+            db = SessionLocal()
+            try:
+                failed_session = db.query(CaptureSession).filter(CaptureSession.id == session_id).first()
+                if failed_session:
+                    failed_session.status = "FAILED"
+                    failed_session.end_time = datetime.datetime.utcnow()
+                    failed_session.error_message = startup_error
+                db.commit()
+            finally:
+                db.close()
+            return {
+                "status": "FAILED",
+                "session_id": session_id,
+                "mode": mode,
+                "interface": interface,
+                "error": startup_error
+            }
+
+        db = SessionLocal()
+        try:
+            db.add(AuditLog(
+                id=f"AUD-{uuid.uuid4().hex[:12].upper()}",
+                timestamp=datetime.datetime.utcnow(),
+                action="CAPTURE_STARTED",
+                actor="OPERATOR",
+                category="CAPTURE",
+                target=interface,
+                details=f"Packet capture session started in {mode} mode on interface {interface}.",
+                status="SUCCESS"
+            ))
+            db.commit()
+        finally:
+            db.close()
 
         return {
             "status": "STARTED",
@@ -207,14 +257,23 @@ class CaptureService:
         return {"status": "STOPPED", "session_id": session_id}
 
     def _handle_raw_packet(self, raw_pkt: Dict[str, Any]):
-        """Processes incoming raw packet across all analysis pipelines."""
+        """Processes packets delivered by the active live or simulated capture."""
         if not self.is_capturing:
-            return
+            return None
 
         session_id = self.active_session_id or "SES-UNKNOWN"
         interface = self.current_interface or "N/A"
         mode = self.current_mode
+        return self.process_packet(raw_pkt, session_id, interface, mode)
 
+    def process_packet(
+        self,
+        raw_pkt: Dict[str, Any],
+        session_id: str,
+        interface: str,
+        mode: str
+    ) -> Dict[str, Any]:
+        """Analyze and persist a packet independently of live-capture state."""
         normalized = normalize_raw_packet(raw_pkt, session_id, interface, mode)
 
         # Threat Detection Pipeline
@@ -269,8 +328,10 @@ class CaptureService:
             db.refresh(packet_rec)
             normalized["id"] = packet_rec.id
 
-        except Exception as e:
+        except Exception:
             db.rollback()
+            logger.exception("Failed to process packet for session %s", session_id)
+            raise
         finally:
             db.close()
 
@@ -282,7 +343,8 @@ class CaptureService:
             try:
                 listener(normalized)
             except Exception:
-                pass
+                logger.exception("Packet listener failed for session %s", session_id)
+        return normalized
 
     def _run_simulation_worker(self):
         """Generates realistic enterprise network traffic and attacks for testing and UI demonstration."""
@@ -302,7 +364,7 @@ class CaptureService:
         ]
 
         idx = 0
-        while self.is_capturing and self.current_mode in ("SIMULATED_TEST", "CONTROLLED_LAB"):
+        while self.is_capturing and self.current_mode == "SIMULATED_TEST":
             pkt_template = sample_scenarios[idx % len(sample_scenarios)].copy()
             pkt_template["timestamp"] = time.time()
             pkt_template["src_mac"] = pkt_template.get("src_mac", "00:1a:2b:3c:4d:5e")

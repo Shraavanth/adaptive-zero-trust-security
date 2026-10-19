@@ -6,6 +6,7 @@ from app.database.session import get_db
 from app.models.self_healing import SelfHealingPlan
 from app.schemas import SelfHealingPlanSchema
 from app.self_healing.self_healing_engine import evaluate_recovery_prerequisites, generate_and_execute_recovery_plan
+from app.core.config import settings
 
 router = APIRouter(prefix="/api/self-healing", tags=["Self-Healing Engine"])
 
@@ -31,5 +32,9 @@ def evaluate_entity(req: EvaluateRequest, db: Session = Depends(get_db)):
 
 @router.post("/execute", response_model=SelfHealingPlanSchema)
 def execute_plan(req: ExecuteRecoveryRequest, db: Session = Depends(get_db)):
-    plan = generate_and_execute_recovery_plan(db, req.entity_id, auto_execute=req.auto_execute)
+    plan = generate_and_execute_recovery_plan(
+        db,
+        req.entity_id,
+        auto_execute=req.auto_execute and settings.AUTO_HEALING_ENABLED
+    )
     return plan

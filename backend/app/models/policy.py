@@ -30,3 +30,11 @@ class RepeatOffender(Base):
     last_incident_time = Column(DateTime, default=datetime.datetime.utcnow, nullable=False)
     attack_categories = Column(Text, default="", nullable=False)  # comma separated or json
     notes = Column(Text, nullable=True)
+
+
+class RepeatOffenderIncident(Base):
+    __tablename__ = "repeat_offender_incidents"
+
+    event_id = Column(String(64), primary_key=True)
+    entity_id = Column(String(64), index=True, nullable=False)
+    recorded_at = Column(DateTime, default=datetime.datetime.utcnow, nullable=False)

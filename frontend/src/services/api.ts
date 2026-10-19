@@ -16,8 +16,10 @@ import {
   AuditLog,
   ScenarioResult,
   Investigation,
+  IncidentEvidence,
   DiagnosticsData,
-  OperatingMode
+  OperatingMode,
+  ResponsePreview
 } from '../types';
 
 const API_BASE = '/api';
@@ -88,6 +90,7 @@ export const api = {
     return fetchJson<SecurityEvent[]>(`${API_BASE}/threats?${query.toString()}`);
   },
   getThreatDetail: (id: string) => fetchJson<SecurityEvent>(`${API_BASE}/threats/${id}`),
+  getThreatEvidence: (id: string) => fetchJson<IncidentEvidence>(`${API_BASE}/threats/${id}/evidence`),
   updateThreatStatus: (id: string, status: string) =>
     fetchJson(`${API_BASE}/threats/${id}/status?status=${status}`, { method: 'PATCH' }),
 
@@ -115,6 +118,12 @@ export const api = {
   // Response & Isolation
   getResponseActions: () => fetchJson<ResponseAction[]>(`${API_BASE}/response/actions`),
   getIsolations: () => fetchJson<any[]>(`${API_BASE}/response/isolations`),
+  previewResponse: (target_entity: string, action_type: ResponseAction['action_type'], reason: string) =>
+    fetchJson<ResponsePreview>(`${API_BASE}/response/preview`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ target_entity, action_type, reason })
+    }),
   executeResponse: (target_entity: string, action_type: string, reason: string, mode = 'SIMULATED') =>
     fetchJson<ResponseAction>(`${API_BASE}/response/execute`, {
       method: 'POST',

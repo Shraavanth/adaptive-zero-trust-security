@@ -1,4 +1,4 @@
-from typing import Optional, List, Dict, Any
+from typing import Optional, List, Dict, Any, Literal
 from datetime import datetime
 from pydantic import BaseModel, Field, ConfigDict
 
@@ -47,10 +47,10 @@ class CaptureSessionSchema(BaseModel):
     notes: Optional[str] = None
 
 class StartCaptureRequest(BaseModel):
-    interface_name: str
-    mode: str = "LIVE_CAPTURE"  # LIVE_CAPTURE, OFFLINE_REPLAY, CONTROLLED_LAB, SIMULATED_TEST
-    packet_limit: Optional[int] = 1000
-    bpf_filter: Optional[str] = ""
+    interface_name: str = Field(min_length=1, max_length=512)
+    mode: Literal["LIVE_CAPTURE", "SIMULATED_TEST", "CONTROLLED_LAB"] = "LIVE_CAPTURE"
+    packet_limit: Optional[int] = Field(default=1000, ge=1, le=100000)
+    bpf_filter: Optional[str] = Field(default="", max_length=2048)
 
 class NetworkInterfaceInfo(BaseModel):
     id: str
@@ -63,7 +63,7 @@ class NetworkInterfaceInfo(BaseModel):
     is_up: bool = True
     is_loopback: bool = False
     is_eligible: bool = True
-    permission_status: str = "Authorized"
+    permission_status: str = "Capture permission not verified"
 
 # ----------------- Network Flows -----------------
 class NetworkFlowSchema(BaseModel):
@@ -209,11 +209,42 @@ class ResponseActionSchema(BaseModel):
     is_verified: bool
     rollback_status: str
 
+class IncidentTimelineEntrySchema(BaseModel):
+    timestamp: datetime
+    record_type: Literal["DETECTION", "PACKET", "TRUST", "POLICY", "RESPONSE"]
+    title: str
+    detail: str
+    status: Optional[str] = None
+
+class IncidentEvidenceSchema(BaseModel):
+    event: SecurityEventSchema
+    packet: Optional[PacketSchema] = None
+    trust_history: List[TrustHistorySchema]
+    policy_decisions: List[ZeroTrustDecisionSchema]
+    response_actions: List[ResponseActionSchema]
+    timeline: List[IncidentTimelineEntrySchema]
+
 class ExecuteActionRequest(BaseModel):
     target_entity: str
     action_type: str  # ALLOW, MONITOR, RESTRICT, ISOLATE, RELEASE
     reason: str
     mode: Optional[str] = "SIMULATED"
+
+class PreviewActionRequest(BaseModel):
+    target_entity: str = Field(min_length=1, max_length=64)
+    action_type: Literal["ALLOW", "MONITOR", "RESTRICT", "ISOLATE", "RELEASE"]
+    reason: str = Field(min_length=1, max_length=1000)
+
+class ResponsePreviewSchema(BaseModel):
+    target_entity: str
+    action_type: str
+    execution_mode: Literal["SIMULATED"]
+    requested_operation: str
+    reason: str
+    would_mutate_state: Literal[False]
+    affected_local_records: List[str]
+    rollback_action: Optional[str] = None
+    rollback_limitations: str
 
 # ----------------- Honeypot -----------------
 class HoneypotInstanceSchema(BaseModel):

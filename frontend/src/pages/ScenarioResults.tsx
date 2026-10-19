@@ -34,7 +34,7 @@ export const ScenarioResults: React.FC = () => {
             Controlled Scenario Test Verification Ledger
           </h2>
           <p className="text-soc-dim mt-0.5">
-            Validation matrix tracking expected outcomes against verified backend policy enforcements.
+            Validation matrix compares observed packet detection, trust history, and policy records. Responses are simulated.
           </p>
         </div>
         <button

@@ -8,14 +8,14 @@ export default {
     extend: {
       colors: {
         soc: {
-          bg: "#0B0F17",           // Deep charcoal/navy background
-          card: "#111827",         // Muted dark card surface
-          cardHover: "#162032",    // Interactive card hover
-          border: "#1E293B",       // Subdued border
-          borderLight: "#334155",  // Prominent border
+          bg: "#080D17",           // Deep charcoal/navy background
+          card: "#101827",         // Muted dark card surface
+          cardHover: "#172338",    // Interactive card hover
+          border: "#26344A",       // Subdued border
+          borderLight: "#3A4A60",  // Prominent border
           text: "#F1F5F9",         // High-contrast primary text
-          muted: "#94A3B8",        // Muted secondary text
-          dim: "#64748B",          // Low-contrast metadata
+          muted: "#B0BDCE",        // Muted secondary text
+          dim: "#8797AD",          // Secondary metadata
           accent: "#2563EB",       // Restrained blue accent
           accentHover: "#1D4ED8",
           trusted: "#10B981",      // Verified healthy green

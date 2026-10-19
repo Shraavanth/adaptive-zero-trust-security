@@ -72,11 +72,19 @@ class TSharkCaptureEngine:
             self.process = subprocess.Popen(
                 cmd,
                 stdout=subprocess.PIPE,
-                stderr=subprocess.PIPE,
+                stderr=subprocess.DEVNULL,
                 text=True,
                 bufsize=1,
                 creationflags=creation_flags
             )
+            exit_code = self.process.poll()
+            if exit_code is not None:
+                self.error_message = (
+                    f"TShark exited during startup with code {exit_code}."
+                )
+                logger.error(self.error_message)
+                self.process = None
+                return False
             self.is_running = True
             self.thread = threading.Thread(target=self._read_stream, daemon=True)
             self.thread.start()
@@ -99,9 +107,9 @@ class TSharkCaptureEngine:
                 if not line:
                     continue
 
-                parts = line.split("/t")
+                parts = line.split("\t")
                 # Pad to expected field length
-                while len(parts) < 20:
+                while len(parts) < 22:
                     parts.append("")
 
                 (

@@ -7,7 +7,7 @@ class SelfHealingPlan(Base):
 
     id = Column(String(64), primary_key=True, index=True)
     entity_id = Column(String(64), index=True, nullable=False)
-    status = Column(String(32), default="EVALUATING", index=True, nullable=False)  # EVALUATING, ELIGIBLE, BLOCKED, APPROVED, EXECUTING, RECOVERED, FAILED
+    status = Column(String(32), default="EVALUATING", index=True, nullable=False)  # EVALUATING, ELIGIBLE, BLOCKED, APPROVED, EXECUTING, SIMULATED, RECOVERED, FAILED
     reason = Column(Text, nullable=False)
     prerequisites_satisfied = Column(Boolean, default=False, nullable=False)
     prerequisites_breakdown = Column(Text, default="{}", nullable=False)  # JSON details of 5m clean check, trust check, risk check, repeat offender check

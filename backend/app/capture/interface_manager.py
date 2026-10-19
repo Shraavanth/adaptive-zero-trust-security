@@ -101,10 +101,11 @@ def discover_network_interfaces() -> List[NetworkInterfaceInfo]:
                         mac = adapter.get("MacAddress", "N/A") or "N/A"
                         status_str = adapter.get("Status", "Up")
                         if_type = str(adapter.get("InterfaceType", "Ethernet"))
-                        if_idx = str(adapter.get("ifIndex", ""))
+                        raw_if_index = adapter.get("ifIndex", "")
+                        if_index = int(raw_if_index) if str(raw_if_index).isdigit() else None
 
                         # Find matching tshark index if available
-                        tshark_target_id = if_idx
+                        tshark_target_id = str(if_index) if if_index is not None else ""
                         for t_id, t_desc in tshark_map.items():
                             if name.lower() in t_desc.lower() or desc.lower() in t_desc.lower():
                                 tshark_target_id = t_id
@@ -113,33 +114,37 @@ def discover_network_interfaces() -> List[NetworkInterfaceInfo]:
                         # Get IP addresses for this adapter
                         ipv4_list = []
                         ipv6_list = []
-                        try:
-                            ip_cmd = f"Get-NetIPAddress -InterfaceIndex {if_idx} | Select-Object IPAddress, AddressFamily | ConvertTo-Json -Compress"
-                            ip_res = subprocess.run(
-                                ["powershell", "-NoProfile", "-Command", ip_cmd],
-                                capture_output=True,
-                                text=True,
-                                timeout=5,
-                                creationflags=subprocess.CREATE_NO_WINDOW
-                            )
-                            if ip_res.returncode == 0 and ip_res.stdout.strip():
-                                ip_data = json.loads(ip_res.stdout.strip())
-                                ip_list = [ip_data] if isinstance(ip_data, dict) else ip_data
-                                for item in ip_list:
-                                    ip_addr = item.get("IPAddress", "")
-                                    fam = item.get("AddressFamily", "")
-                                    if fam == "IPv4" or ":" not in ip_addr:
-                                        if ip_addr and not ip_addr.startswith("169.254"):
-                                            ipv4_list.append(ip_addr)
-                                    else:
-                                        if ip_addr and not ip_addr.startswith("fe80"):
-                                            ipv6_list.append(ip_addr)
-                        except Exception:
-                            pass
+                        if if_index is not None:
+                            try:
+                                ip_cmd = f"Get-NetIPAddress -InterfaceIndex {if_index} | Select-Object IPAddress, AddressFamily | ConvertTo-Json -Compress"
+                                ip_res = subprocess.run(
+                                    ["powershell", "-NoProfile", "-Command", ip_cmd],
+                                    capture_output=True,
+                                    text=True,
+                                    timeout=5,
+                                    creationflags=subprocess.CREATE_NO_WINDOW
+                                )
+                                if ip_res.returncode == 0 and ip_res.stdout.strip():
+                                    ip_data = json.loads(ip_res.stdout.strip())
+                                    ip_list = [ip_data] if isinstance(ip_data, dict) else ip_data
+                                    for item in ip_list:
+                                        ip_addr = item.get("IPAddress", "")
+                                        fam = item.get("AddressFamily", "")
+                                        if fam == "IPv4" or ":" not in ip_addr:
+                                            if ip_addr and not ip_addr.startswith("169.254"):
+                                                ipv4_list.append(ip_addr)
+                                        else:
+                                            if ip_addr and not ip_addr.startswith("fe80"):
+                                                ipv6_list.append(ip_addr)
+                            except Exception:
+                                pass
 
                         is_up = (status_str.lower() == "up")
                         is_eligible = npcap_ok and is_up
-                        perm = "Authorized (Npcap Ready)" if npcap_ok else "Requires Npcap Driver"
+                        perm = (
+                            "Capture permission not verified (Npcap detected)"
+                            if npcap_ok else "Requires Npcap Driver"
+                        )
 
                         interfaces.append(NetworkInterfaceInfo(
                             id=tshark_target_id or name,
@@ -176,7 +181,7 @@ def discover_network_interfaces() -> List[NetworkInterfaceInfo]:
                     is_up=True,
                     is_loopback="lo" in iface_name.lower(),
                     is_eligible=True,
-                    permission_status="Authorized"
+                    permission_status="Capture permission not verified"
                 ))
         except Exception:
             # Default Loopback / Virtual interface for lab testing
@@ -191,7 +196,7 @@ def discover_network_interfaces() -> List[NetworkInterfaceInfo]:
                 is_up=True,
                 is_loopback=True,
                 is_eligible=True,
-                permission_status="Authorized"
+                permission_status="Capture permission not verified"
             ))
 
     return interfaces

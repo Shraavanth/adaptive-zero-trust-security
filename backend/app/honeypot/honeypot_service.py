@@ -47,14 +47,24 @@ def seed_default_honeypots(db: Session):
                 service_type=hp_info["service_type"],
                 port=hp_info["port"],
                 ip_address=hp_info["ip_address"],
-                status="RUNNING",
+                status="SIMULATED",
                 interaction_count=0,
                 mode=hp_info["mode"],
                 deployed_at=datetime.datetime.utcnow(),
-                health_status="HEALTHY"
+                health_status="NOT_LISTENING"
             )
             db.add(inst)
         db.commit()
+    else:
+        simulated_instances = db.query(HoneypotInstance).filter(
+            HoneypotInstance.mode == "SIMULATED",
+            HoneypotInstance.status == "RUNNING"
+        ).all()
+        for instance in simulated_instances:
+            instance.status = "SIMULATED"
+            instance.health_status = "NOT_LISTENING"
+        if simulated_instances:
+            db.commit()
 
 def record_honeypot_interaction(
     db: Session,

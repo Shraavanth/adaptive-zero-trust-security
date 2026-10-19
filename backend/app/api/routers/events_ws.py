@@ -1,10 +1,12 @@
 import json
 import asyncio
+import logging
 from typing import AsyncGenerator
 from fastapi import APIRouter
 from fastapi.responses import StreamingResponse
 from app.capture.capture_service import capture_service
 
+logger = logging.getLogger("events_ws")
 router = APIRouter(prefix="/api/events", tags=["Real-Time Streaming"])
 
 async def packet_event_generator() -> AsyncGenerator[str, None]:
@@ -13,13 +15,16 @@ async def packet_event_generator() -> AsyncGenerator[str, None]:
     directly to the frontend via Server-Sent Events (SSE).
     """
     queue: asyncio.Queue = asyncio.Queue(maxsize=200)
-    loop = asyncio.get_event_loop()
+    loop = asyncio.get_running_loop()
 
     def on_packet(pkt):
-        try:
-            loop.call_soon_threadsafe(queue.put_nowait, pkt)
-        except Exception:
-            pass  # Drop if queue saturated to maintain SOC UI performance
+        def enqueue_packet():
+            if queue.full():
+                logger.debug("Dropping streamed packet because subscriber queue is full.")
+                return
+            queue.put_nowait(pkt)
+
+        loop.call_soon_threadsafe(enqueue_packet)
 
     capture_service.subscribe(on_packet)
     try:

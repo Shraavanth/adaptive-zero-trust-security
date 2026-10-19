@@ -1,6 +1,7 @@
 import os
 import subprocess
 import datetime
+import importlib.util
 from fastapi import APIRouter, Depends
 from sqlalchemy.orm import Session
 from app.database.session import get_db
@@ -50,8 +51,12 @@ def get_diagnostics(db: Session = Depends(get_db)):
         "tshark_path": tshark_path or "Not found",
         "tshark_version": tshark_version,
         "npcap_installed": npcap_installed,
-        "scapy_available": True,
-        "capture_permissions": "Authorized (Npcap ready)" if npcap_installed else "Limited (Npcap required for raw interface capture)",
+        "scapy_available": importlib.util.find_spec("scapy") is not None,
+        "capture_permissions": (
+            "Npcap detected; capture permission is not verified until capture starts."
+            if npcap_installed else
+            "Npcap not detected; raw interface capture may be unavailable."
+        ),
         "active_capture_session": capture_status["active_session_id"],
         "is_capturing": capture_status["is_capturing"],
         "total_stored_packets": total_packets,

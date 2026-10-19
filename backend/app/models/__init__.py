@@ -3,7 +3,7 @@ from app.models.capture import CaptureSession, PacketRecord
 from app.models.flow import NetworkFlow
 from app.models.detection import SecurityEvent, Investigation
 from app.models.trust import DeviceTrust, TrustHistory
-from app.models.policy import ZeroTrustDecision, RepeatOffender
+from app.models.policy import ZeroTrustDecision, RepeatOffender, RepeatOffenderIncident
 from app.models.response import ResponseAction, IsolationRecord
 from app.models.honeypot import HoneypotInstance, HoneypotEvent
 from app.models.self_healing import SelfHealingPlan, SelfHealingLog
@@ -22,6 +22,7 @@ __all__ = [
     "TrustHistory",
     "ZeroTrustDecision",
     "RepeatOffender",
+    "RepeatOffenderIncident",
     "ResponseAction",
     "IsolationRecord",
     "HoneypotInstance",

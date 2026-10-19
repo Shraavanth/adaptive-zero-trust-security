@@ -29,6 +29,8 @@ interface SidebarProps {
   onNavigate: (pageId: string) => void;
   threatCount?: number;
   isolatedCount?: number;
+  isOpen: boolean;
+  onClose: () => void;
 }
 
 interface NavSection {
@@ -45,7 +47,9 @@ export const Sidebar: React.FC<SidebarProps> = ({
   activePage,
   onNavigate,
   threatCount = 0,
-  isolatedCount = 0
+  isolatedCount = 0,
+  isOpen,
+  onClose
 }) => {
   const sections: NavSection[] = [
     {
@@ -97,7 +101,18 @@ export const Sidebar: React.FC<SidebarProps> = ({
   ];
 
   return (
-    <aside className="w-64 bg-soc-bg border-r border-soc-border flex flex-col h-screen select-none shrink-0">
+    <>
+      {isOpen && (
+        <button
+          type="button"
+          aria-label="Close navigation"
+          className="fixed inset-0 z-40 bg-slate-950/70 backdrop-blur-sm lg:hidden"
+          onClick={onClose}
+        />
+      )}
+      <aside className={`fixed inset-y-0 left-0 z-50 flex h-screen w-72 shrink-0 select-none flex-col border-r border-soc-border bg-soc-bg transition-transform duration-200 lg:static lg:z-auto lg:w-64 lg:translate-x-0 ${
+        isOpen ? 'translate-x-0' : '-translate-x-full'
+      }`}>
       {/* Brand Header */}
       <div className="p-4 border-b border-soc-border flex items-center gap-3">
         <div className="w-9 h-9 rounded-md bg-blue-900/60 border border-blue-500/50 flex items-center justify-center text-blue-400 shadow-sm shadow-blue-900/40">
@@ -110,7 +125,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
       </div>
 
       {/* Nav List */}
-      <nav className="flex-1 overflow-y-auto px-2 py-3 space-y-4">
+      <nav aria-label="Primary navigation" className="flex-1 overflow-y-auto px-2 py-3 space-y-4">
         {sections.map((sec, idx) => (
           <div key={idx} className="space-y-1">
             <h2 className="px-3 text-[10px] font-mono font-semibold tracking-wider text-soc-dim uppercase">
@@ -123,6 +138,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
                   <button
                     key={item.id}
                     onClick={() => onNavigate(item.id)}
+                    aria-current={isActive ? 'page' : undefined}
                     className={`w-full flex items-center justify-between px-3 py-2 rounded-md text-xs font-medium transition-colors ${
                       isActive
                         ? 'bg-soc-card border border-blue-500/40 text-blue-400 shadow-sm'
@@ -149,11 +165,12 @@ export const Sidebar: React.FC<SidebarProps> = ({
       {/* Footer Info */}
       <div className="p-3 border-t border-soc-border bg-soc-bg/80 text-[11px] font-mono text-soc-dim flex items-center justify-between">
         <span className="flex items-center gap-1.5">
-          <span className="w-2 h-2 rounded-full bg-emerald-400" />
+          <span aria-hidden="true" className="w-2 h-2 rounded-full bg-emerald-400" />
           SOC Framework v1.0
         </span>
         <span>Local Core</span>
       </div>
-    </aside>
+      </aside>
+    </>
   );
 };

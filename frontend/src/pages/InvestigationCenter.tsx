@@ -1,12 +1,15 @@
 import React, { useState, useEffect } from 'react';
 import { Search, RefreshCw, CheckCircle, Clock, FileText, User } from 'lucide-react';
 import { api } from '../services/api';
-import { Investigation } from '../types';
+import { IncidentEvidence, Investigation } from '../types';
 
 export const InvestigationCenter: React.FC = () => {
   const [cases, setCases] = useState<Investigation[]>([]);
   const [selectedCase, setSelectedCase] = useState<Investigation | null>(null);
   const [noteText, setNoteText] = useState('');
+  const [incidentEvidence, setIncidentEvidence] = useState<IncidentEvidence | null>(null);
+  const [evidenceLoading, setEvidenceLoading] = useState(false);
+  const [evidenceError, setEvidenceError] = useState<string | null>(null);
 
   const fetchCases = async () => {
     try {
@@ -24,6 +27,32 @@ export const InvestigationCenter: React.FC = () => {
   useEffect(() => {
     fetchCases();
   }, []);
+
+  useEffect(() => {
+    if (!selectedCase) {
+      setIncidentEvidence(null);
+      return;
+    }
+    let isCurrent = true;
+    setEvidenceLoading(true);
+    setEvidenceError(null);
+    setIncidentEvidence(null);
+    api.getThreatEvidence(selectedCase.event_id)
+      .then((data) => {
+        if (isCurrent) setIncidentEvidence(data);
+      })
+      .catch((err) => {
+        if (isCurrent) {
+          setEvidenceError(err instanceof Error ? err.message : String(err));
+        }
+      })
+      .finally(() => {
+        if (isCurrent) setEvidenceLoading(false);
+      });
+    return () => {
+      isCurrent = false;
+    };
+  }, [selectedCase?.event_id]);
 
   const handleUpdateStatus = async (status: string) => {
     if (!selectedCase) return;
@@ -151,6 +180,59 @@ export const InvestigationCenter: React.FC = () => {
                   </div>
                 </div>
               </div>
+
+              <section aria-label="Correlated incident evidence" className="rounded border border-soc-border bg-soc-bg p-3">
+                <div className="mb-3 flex flex-wrap items-center justify-between gap-2">
+                  <div>
+                    <h4 className="font-bold uppercase tracking-wider text-soc-text">Correlated incident timeline</h4>
+                    <p className="mt-1 text-[10px] text-soc-dim">
+                      Persisted packet, detection, trust, policy, and response records for this event.
+                    </p>
+                  </div>
+                  {incidentEvidence && (
+                    <span className="rounded border border-blue-800 bg-blue-950/60 px-2 py-1 text-[10px] text-blue-300">
+                      {incidentEvidence.timeline.length} evidence records
+                    </span>
+                  )}
+                </div>
+                {evidenceLoading && <p role="status" className="py-4 text-center text-soc-dim">Loading correlated evidence…</p>}
+                {evidenceError && (
+                  <p role="alert" className="rounded border border-rose-800 bg-rose-950/40 p-2 text-rose-300">
+                    Unable to load incident evidence: {evidenceError}
+                  </p>
+                )}
+                {!evidenceLoading && incidentEvidence && (
+                  <div className="space-y-3">
+                    {incidentEvidence.packet ? (
+                      <div className="grid grid-cols-2 gap-2 rounded border border-soc-border p-2 text-[10px] sm:grid-cols-4">
+                        <div><span className="text-soc-dim">PACKET</span><p className="text-soc-text">#{incidentEvidence.packet.id}</p></div>
+                        <div><span className="text-soc-dim">SOURCE</span><p className="break-all text-soc-text">{incidentEvidence.packet.src_ip}:{incidentEvidence.packet.src_port ?? '—'}</p></div>
+                        <div><span className="text-soc-dim">DESTINATION</span><p className="break-all text-soc-text">{incidentEvidence.packet.dst_ip}:{incidentEvidence.packet.dst_port ?? '—'}</p></div>
+                        <div><span className="text-soc-dim">PROTOCOL / MODE</span><p className="text-soc-text">{incidentEvidence.packet.protocol} / {incidentEvidence.packet.mode}</p></div>
+                      </div>
+                    ) : (
+                      <p className="rounded border border-amber-900/70 bg-amber-950/30 p-2 text-[10px] text-amber-300">
+                        No packet record is linked to this event.
+                      </p>
+                    )}
+                    <ol className="max-h-72 space-y-2 overflow-y-auto">
+                      {incidentEvidence.timeline.map((entry, index) => (
+                        <li key={`${entry.record_type}-${entry.timestamp}-${index}`} className="flex gap-3 border-l border-blue-900 pl-3">
+                          <span className="mt-1.5 h-2 w-2 shrink-0 rounded-full bg-blue-400" aria-hidden="true" />
+                          <div className="min-w-0 flex-1">
+                            <div className="flex flex-wrap items-center justify-between gap-x-3 gap-y-1">
+                              <span className="font-semibold text-soc-text">{entry.title}</span>
+                              <time className="text-[10px] text-soc-dim">{new Date(entry.timestamp).toLocaleString()}</time>
+                            </div>
+                            <p className="mt-1 whitespace-pre-wrap break-words text-[10px] leading-relaxed text-soc-muted">{entry.detail}</p>
+                            {entry.status && <span className="mt-1 inline-block text-[9px] uppercase text-blue-300">{entry.record_type}: {entry.status}</span>}
+                          </div>
+                        </li>
+                      ))}
+                    </ol>
+                  </div>
+                )}
+              </section>
 
               <div>
                 <label className="block text-soc-muted mb-1 font-medium uppercase text-[11px]">

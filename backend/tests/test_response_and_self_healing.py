@@ -24,11 +24,12 @@ def test_response_isolation_and_release(db_session):
     # 1. Execute ISOLATE
     action = execute_response_action(db_session, target, "ISOLATE", "Threat containment", mode="SIMULATED")
     assert action.action_type == "ISOLATE"
-    assert action.execution_status == "EXECUTED"
+    assert action.execution_status == "SIMULATED"
+    assert action.is_verified is False
 
     iso = db_session.query(IsolationRecord).filter(IsolationRecord.entity_id == target).first()
     assert iso is not None
-    assert iso.status == "ISOLATED"
+    assert iso.status == "SIMULATED"
 
     # 2. Execute RELEASE
     rel_action = execute_response_action(db_session, target, "RELEASE", "Operator release", mode="SIMULATED")
@@ -36,6 +37,15 @@ def test_response_isolation_and_release(db_session):
 
     iso_updated = db_session.query(IsolationRecord).filter(IsolationRecord.entity_id == target).first()
     assert iso_updated.status == "RELEASED"
+
+    with pytest.raises(ValueError, match="Real network enforcement is not implemented"):
+        execute_response_action(
+            db_session,
+            target,
+            "ISOLATE",
+            "Explicit lab mode is not implemented",
+            mode="AUTHORIZED_LAB"
+        )
 
 def test_self_healing_blocked_by_recent_malicious_event(db_session):
     target = "192.168.1.190"
@@ -125,8 +135,9 @@ def test_self_healing_permitted_and_executed(db_session):
 
     # Execute recovery plan
     plan = generate_and_execute_recovery_plan(db_session, target, auto_execute=True)
-    assert plan.status == "RECOVERED"
-    assert plan.verified is True
+    assert plan.status == "SIMULATED"
+    assert plan.verified is False
+    assert "not modified or verified" in plan.verification_details.lower()
     assert plan.recovery_time_seconds is not None
 
     # Isolation must be revoked

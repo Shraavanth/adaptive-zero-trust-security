@@ -169,7 +169,7 @@ export const SelfHealing: React.FC = () => {
                 <th className="py-2.5 px-3">Candidate Entity</th>
                 <th className="py-2.5 px-3">Status</th>
                 <th className="py-2.5 px-3">Prerequisites</th>
-                <th className="py-2.5 px-3">Verified Health</th>
+                <th className="py-2.5 px-3">Network Verification</th>
                 <th className="py-2.5 px-3">Recovery Latency</th>
                 <th className="py-2.5 px-3">Timestamp</th>
               </tr>
@@ -182,8 +182,8 @@ export const SelfHealing: React.FC = () => {
                     <td className="py-2 px-3 font-bold">{p.entity_id}</td>
                     <td className="py-2 px-3">
                       <span className={`px-2 py-0.5 rounded text-[10px] font-bold ${
-                        p.status === 'RECOVERED'
-                          ? 'bg-emerald-950 text-emerald-300 border border-emerald-800'
+                        p.status === 'SIMULATED'
+                          ? 'bg-amber-950 text-amber-300 border border-amber-800'
                           : p.status === 'BLOCKED'
                           ? 'bg-rose-950 text-rose-300 border border-rose-800'
                           : 'bg-amber-950 text-amber-300 border border-amber-800'
@@ -201,6 +201,8 @@ export const SelfHealing: React.FC = () => {
                     <td className="py-2 px-3">
                       {p.verified ? (
                         <span className="text-emerald-400">Telemetry Verified</span>
+                      ) : p.status === 'SIMULATED' || p.status === 'RECOVERED' ? (
+                        <span className="text-amber-400">Not verified (simulation)</span>
                       ) : (
                         <span className="text-soc-dim">Pending</span>
                       )}

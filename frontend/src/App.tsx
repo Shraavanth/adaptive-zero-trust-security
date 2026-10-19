@@ -36,6 +36,8 @@ export const App: React.FC = () => {
   const [packetRate, setPacketRate] = useState<number>(0);
   const [threatCount, setThreatCount] = useState<number>(0);
   const [isolatedCount, setIsolatedCount] = useState<number>(0);
+  const [mobileNavOpen, setMobileNavOpen] = useState(false);
+  const [serviceError, setServiceError] = useState<string | null>(null);
 
   // Poll capture status and counts
   const checkStatus = async () => {
@@ -47,9 +49,14 @@ export const App: React.FC = () => {
       if (status.stats?.malicious_packets !== undefined) setThreatCount(status.stats.malicious_packets);
 
       const isolations = await api.getIsolations();
-      const activeIso = isolations.filter((i: any) => i.status === 'ISOLATED').length;
+      const activeIso = isolations.filter((i: any) =>
+        i.status === 'ISOLATED' && i.execution_mode !== 'SIMULATED'
+      ).length;
       setIsolatedCount(activeIso);
-    } catch (_) {}
+      setServiceError(null);
+    } catch (err) {
+      setServiceError(`Backend status unavailable: ${err instanceof Error ? err.message : String(err)}`);
+    }
   };
 
   useEffect(() => {
@@ -82,6 +89,11 @@ export const App: React.FC = () => {
     } catch (err) {
       alert(`Capture command error: ${err}`);
     }
+  };
+
+  const handleNavigate = (page: string) => {
+    setActivePage(page);
+    setMobileNavOpen(false);
   };
 
   const getPageTitle = () => {
@@ -170,9 +182,11 @@ export const App: React.FC = () => {
       {/* Persistent Left Sidebar */}
       <Sidebar
         activePage={activePage}
-        onNavigate={setActivePage}
+        onNavigate={handleNavigate}
         threatCount={threatCount}
         isolatedCount={isolatedCount}
+        isOpen={mobileNavOpen}
+        onClose={() => setMobileNavOpen(false)}
       />
 
       {/* Main Container */}
@@ -187,11 +201,19 @@ export const App: React.FC = () => {
           onChangeMode={setCurrentMode}
           packetRate={packetRate}
           isConnected={isConnected}
+          onOpenMenu={() => setMobileNavOpen(true)}
         />
 
         {/* Scrollable Main Content */}
-        <main className="flex-1 overflow-y-auto p-6 bg-soc-bg">
-          {renderPage()}
+        <main className="soc-main min-h-0 flex-1 overflow-y-auto p-3 sm:p-5 lg:p-6">
+          <div className="mx-auto w-full max-w-[1600px]">
+            {serviceError && (
+              <div role="alert" className="mb-4 rounded-lg border border-rose-800 bg-rose-950/70 px-4 py-3 text-sm text-rose-200">
+                {serviceError}
+              </div>
+            )}
+            {renderPage()}
+          </div>
         </main>
       </div>
     </div>

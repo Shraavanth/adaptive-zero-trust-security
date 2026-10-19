@@ -78,6 +78,17 @@ export const Settings: React.FC = () => {
               />
             </div>
             <div>
+              <label className="block text-soc-dim mb-1">Informational Event Penalty (pts)</label>
+              <input
+                type="number"
+                min="0"
+                max="100"
+                value={configs.penalty_informational || '2'}
+                onChange={(e) => handleChange('penalty_informational', e.target.value)}
+                className="w-full bg-soc-bg border border-soc-border rounded px-3 py-1.5 text-soc-text"
+              />
+            </div>
+            <div>
               <label className="block text-soc-dim mb-1">Phishing Attack Penalty (pts)</label>
               <input
                 type="number"
@@ -115,8 +126,21 @@ export const Settings: React.FC = () => {
               <label className="block text-soc-dim mb-1">Behavior-Risk Quarantine Override (&ge;)</label>
               <input
                 type="number"
+                min="0"
+                max="100"
                 value={configs.behavior_risk_isolate_threshold || '70'}
                 onChange={(e) => handleChange('behavior_risk_isolate_threshold', e.target.value)}
+                className="w-full bg-soc-bg border border-soc-border rounded px-3 py-1.5 text-soc-text"
+              />
+            </div>
+            <div>
+              <label className="block text-soc-dim mb-1">Maximum Recovery Risk Score</label>
+              <input
+                type="number"
+                min="0"
+                max="100"
+                value={configs.recovery_max_risk_score || '69'}
+                onChange={(e) => handleChange('recovery_max_risk_score', e.target.value)}
                 className="w-full bg-soc-bg border border-soc-border rounded px-3 py-1.5 text-soc-text"
               />
             </div>
@@ -146,7 +170,29 @@ export const Settings: React.FC = () => {
                 className="w-full bg-soc-bg border border-soc-border rounded px-3 py-1.5 text-soc-text"
               >
                 <option value="SIMULATED">SIMULATED (Production Safe)</option>
-                <option value="AUTHORIZED_LAB">AUTHORIZED_LAB (Lab Verification)</option>
+                <option value="AUTHORIZED_LAB" disabled>AUTHORIZED_LAB (Not implemented)</option>
+              </select>
+            </div>
+            <div>
+              <label className="block text-soc-dim mb-1">Automatic Simulated Recovery</label>
+              <select
+                value={configs.auto_healing_enabled || 'true'}
+                onChange={(e) => handleChange('auto_healing_enabled', e.target.value)}
+                className="w-full bg-soc-bg border border-soc-border rounded px-3 py-1.5 text-soc-text"
+              >
+                <option value="true">Enabled</option>
+                <option value="false">Disabled</option>
+              </select>
+            </div>
+            <div>
+              <label className="block text-soc-dim mb-1">Default Packet Privacy Masking</label>
+              <select
+                value={configs.privacy_masking_enabled || 'true'}
+                onChange={(e) => handleChange('privacy_masking_enabled', e.target.value)}
+                className="w-full bg-soc-bg border border-soc-border rounded px-3 py-1.5 text-soc-text"
+              >
+                <option value="true">Enabled</option>
+                <option value="false">Disabled</option>
               </select>
             </div>
           </div>

@@ -4,7 +4,7 @@
 
 1. **Python**: 3.11+
 2. **Node.js**: v18+ with `npm`
-3. **Capture Tools (Windows)**:
+3. **Capture Tools (optional; Windows)**:
    - **Wireshark / TShark**: Recommended for high-speed packet dissection (default: `C:\Program Files\Wireshark\tshark.exe`).
    - **Npcap**: Required on Windows for capturing raw hardware network adapter traffic. Installed automatically with Wireshark.
 
@@ -19,7 +19,9 @@ cd backend
 pip install -r requirements.txt
 ```
 
-Verify backend environment and run migrations / database initialization:
+The API has no authentication or authorization. Keep the backend bound to localhost; do not expose it to an untrusted network. The default database is `data/adaptive_zero_trust.db` and stores application data between runs. Do not run the API integration tests against that database.
+
+Initialize the application database:
 
 ```bash
 python -c "from app.main import app; from app.database.session import init_db; init_db(); print('DB Ready!')"
@@ -58,9 +60,16 @@ All API requests (`/api/...` and `/ws/...`) are automatically proxied to the Fas
 
 ## 3. Running Automated Tests
 
-Run the complete backend test suite using Pytest:
+Run the backend suite with an isolated, temporary SQLite database. The runner removes only its own temporary database after the tests finish:
 
 ```bash
 cd backend
-pytest tests/ -v
+python run_tests.py
+```
+
+Build the frontend (TypeScript check and production bundle):
+
+```bash
+cd frontend
+npm run build
 ```

@@ -88,7 +88,7 @@ def generate_and_execute_recovery_plan(
     auto_execute: bool = True
 ) -> SelfHealingPlan:
     """
-    Executes the multi-stage self-healing lifecycle for an isolated or restricted entity.
+    Simulates the local recovery-state lifecycle for an isolated or restricted entity.
     """
     plan_id = f"REC-{uuid.uuid4().hex[:12].upper()}"
     now = datetime.datetime.utcnow()
@@ -135,14 +135,14 @@ def generate_and_execute_recovery_plan(
         timestamp=datetime.datetime.utcnow(),
         step_name="RECOVERY_EXECUTION",
         status="INFO",
-        details=f"Applying quarantine release and network route restoration for {entity_id}."
+        details=f"Simulating the local quarantine-release state update for {entity_id}."
     )
     db.add(log_exec)
 
     # Revoke isolation record
     iso_records = db.query(IsolationRecord).filter(
         IsolationRecord.entity_id == entity_id,
-        IsolationRecord.status == "ISOLATED"
+        IsolationRecord.status.in_(("ISOLATED", "SIMULATED"))
     ).all()
     for iso in iso_records:
         iso.status = "RELEASED"
@@ -161,28 +161,30 @@ def generate_and_execute_recovery_plan(
         action_type="RELEASE",
         requested_operation="Autonomous self-healing quarantine release",
         execution_mode="SIMULATED",
-        execution_status="EXECUTED",
+        execution_status="SIMULATED",
         start_time=now,
         end_time=datetime.datetime.utcnow(),
-        result_details=f"Entity {entity_id} safely reinstated by Self-Healing Engine.",
-        is_verified=True,
-        rollback_status="AVAILABLE"
+        result_details=f"Simulated release recorded for {entity_id}; no network policy was changed.",
+        is_verified=False,
+        rollback_status="NONE"
     )
     db.add(action)
 
     # 3. Post-execution health verification
-    plan.verified = True
-    plan.verification_details = "Network health, ACL release, and telemetry flow verified."
+    plan.verified = False
+    plan.verification_details = (
+        "Local recovery state was simulated. Network ACLs and host connectivity were not modified or verified."
+    )
     plan.completed_at = datetime.datetime.utcnow()
-    plan.status = "RECOVERED"
+    plan.status = "SIMULATED"
     plan.recovery_time_seconds = (plan.completed_at - plan.created_at).total_seconds()
 
     log_verify = SelfHealingLog(
         plan_id=plan_id,
         timestamp=datetime.datetime.utcnow(),
-        step_name="HEALTH_VERIFICATION",
-        status="SUCCESS",
-        details="Post-recovery baseline verification passed. Host communication verified."
+        step_name="SIMULATED_STATE_UPDATE",
+        status="INFO",
+        details="Local isolation records and trust state were updated; no external network health check was performed."
     )
     db.add(log_verify)
 
@@ -190,12 +192,12 @@ def generate_and_execute_recovery_plan(
     audit = AuditLog(
         id=f"AUD-{uuid.uuid4().hex[:12].upper()}",
         timestamp=datetime.datetime.utcnow(),
-        action="SELF_HEALING_COMPLETED",
+        action="SELF_HEALING_SIMULATED",
         actor="SELF_HEALING_AUTOMATION",
         category="HEALING",
         target=entity_id,
-        details=f"Self-healing successfully recovered entity {entity_id} in {plan.recovery_time_seconds:.2f}s.",
-        status="SUCCESS"
+        details=f"Self-healing state transition was simulated for entity {entity_id}; network health was not verified.",
+        status="SIMULATED"
     )
     db.add(audit)
 

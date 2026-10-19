@@ -102,3 +102,24 @@ def test_repeat_offender_escalation_lifecycle(db_session):
     off4 = record_qualifying_incident(db_session, target, {"src_ip": target, "category": "PHISHING"})
     assert off4.qualifying_incident_count == 4
     assert off4.escalation_state == "PERMANENT_BLOCK"
+
+def test_repeat_offender_counts_distinct_event_ids_once(db_session):
+    target = "192.0.2.220"
+    incident = {
+        "id": "EVT-DISTINCT-01",
+        "src_ip": target,
+        "category": "PHISHING",
+    }
+    first = record_qualifying_incident(db_session, target, incident)
+    duplicate = record_qualifying_incident(db_session, target, incident)
+
+    assert duplicate.qualifying_incident_count == first.qualifying_incident_count == 1
+    assert duplicate.escalation_state == "ACTIVE"
+
+    second = record_qualifying_incident(db_session, target, {
+        "id": "EVT-DISTINCT-02",
+        "src_ip": target,
+        "category": "DNS_SPOOFING",
+    })
+    assert second.qualifying_incident_count == 2
+    assert second.escalation_state == "ENHANCED_MONITORING"

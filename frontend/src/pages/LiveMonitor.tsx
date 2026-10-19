@@ -29,7 +29,15 @@ export const LiveMonitor: React.FC<LiveMonitorProps> = ({ packets: streamPackets
   const [protocolFilter, setProtocolFilter] = useState('ALL');
   const [statusFilter, setStatusFilter] = useState('ALL');
   const [maskData, setMaskData] = useState(true);
+  const [isSavingMask, setIsSavingMask] = useState(false);
+  const [maskSaveError, setMaskSaveError] = useState('');
   const [selectedPacket, setSelectedPacket] = useState<Packet | null>(null);
+
+  useEffect(() => {
+    api.getSettings()
+      .then((configs) => setMaskData(configs.privacy_masking_enabled !== 'false'))
+      .catch((err) => console.error('Failed to load privacy masking preference', err));
+  }, []);
 
   // Load initial persisted packets from API
   useEffect(() => {
@@ -80,6 +88,21 @@ export const LiveMonitor: React.FC<LiveMonitorProps> = ({ packets: streamPackets
     window.open(`/api/packets/export/data?format=${format}&limit=500`, '_blank');
   };
 
+  const handleToggleMask = async () => {
+    const nextMaskData = !maskData;
+    setIsSavingMask(true);
+    setMaskSaveError('');
+    try {
+      await api.updateSettings({ privacy_masking_enabled: String(nextMaskData) });
+      setMaskData(nextMaskData);
+    } catch (err) {
+      console.error('Failed to save privacy masking preference', err);
+      setMaskSaveError('Unable to save privacy masking preference.');
+    } finally {
+      setIsSavingMask(false);
+    }
+  };
+
   return (
     <div className="space-y-4">
       {/* Top Banner & Quick Controls */}
@@ -107,13 +130,15 @@ export const LiveMonitor: React.FC<LiveMonitorProps> = ({ packets: streamPackets
 
           {/* Privacy Mask Toggle */}
           <button
-            onClick={() => setMaskData(!maskData)}
+            onClick={handleToggleMask}
+            disabled={isSavingMask}
             className="flex items-center gap-1.5 px-3 py-1.5 rounded bg-soc-bg hover:bg-soc-cardHover border border-soc-border text-xs font-mono text-soc-muted hover:text-soc-text transition-colors"
-            title="Mask or Reveal IP/MAC addresses in shared SOC environments"
+            title="Mask IP/MAC addresses in this view. Exported packet data is not masked."
           >
             {maskData ? <EyeOff className="w-3.5 h-3.5 text-amber-400" /> : <Eye className="w-3.5 h-3.5 text-emerald-400" />}
             {maskData ? 'MASKED' : 'REVEALED'}
           </button>
+          {maskSaveError && <span role="alert" className="text-rose-400">{maskSaveError}</span>}
 
           {/* Export Dropdown */}
           <div className="flex items-center rounded border border-soc-border bg-soc-bg text-xs font-mono">

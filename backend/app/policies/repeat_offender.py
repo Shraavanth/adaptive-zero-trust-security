@@ -1,7 +1,7 @@
 import datetime
 from typing import Dict, Any, Optional
 from sqlalchemy.orm import Session
-from app.models.policy import RepeatOffender
+from app.models.policy import RepeatOffender, RepeatOffenderIncident
 
 ESCALATION_LEVELS = {
     1: "ACTIVE",
@@ -21,8 +21,20 @@ def record_qualifying_incident(
     ip_addr = event.get("src_ip", "N/A")
     mac_addr = event.get("src_mac", "N/A")
     category = str(event.get("category", "UNKNOWN"))
+    event_id = event.get("id")
 
     offender = db.query(RepeatOffender).filter(RepeatOffender.entity_id == entity_id).first()
+    if event_id:
+        recorded_incident = db.query(RepeatOffenderIncident).filter(
+            RepeatOffenderIncident.event_id == event_id
+        ).first()
+        if recorded_incident:
+            if recorded_incident.entity_id != entity_id:
+                raise ValueError(f"Event {event_id} is already assigned to another entity.")
+            if offender is None:
+                raise RuntimeError(f"Repeat-offender record is missing for event {event_id}.")
+            return offender
+
     now = datetime.datetime.utcnow()
 
     if not offender:
@@ -50,6 +62,13 @@ def record_qualifying_incident(
         cats.add(category)
         offender.attack_categories = ",".join(sorted(cats))
         offender.notes = f"Escalated to {new_state} upon incident #{count} ({category})"
+
+    if event_id:
+        db.add(RepeatOffenderIncident(
+            event_id=event_id,
+            entity_id=entity_id,
+            recorded_at=now,
+        ))
 
     db.commit()
     db.refresh(offender)

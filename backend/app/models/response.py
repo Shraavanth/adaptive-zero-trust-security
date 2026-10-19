@@ -12,7 +12,7 @@ class ResponseAction(Base):
     policy_decision_id = Column(String(64), nullable=True)
     requested_operation = Column(String(64), nullable=False)
     execution_mode = Column(String(32), default="SIMULATED", nullable=False)  # SIMULATED, AUTHORIZED_LAB
-    execution_status = Column(String(32), default="PENDING", index=True, nullable=False)  # PENDING, EXECUTED, FAILED, ROLLED_BACK
+    execution_status = Column(String(32), default="PENDING", index=True, nullable=False)  # PENDING, SIMULATED, EXECUTED, FAILED, ROLLED_BACK
     start_time = Column(DateTime, default=datetime.datetime.utcnow, nullable=False)
     end_time = Column(DateTime, nullable=True)
     result_details = Column(Text, default="", nullable=False)
@@ -29,6 +29,6 @@ class IsolationRecord(Base):
     isolation_type = Column(String(32), default="HOST_QUARANTINE", nullable=False)
     isolated_at = Column(DateTime, default=datetime.datetime.utcnow, nullable=False)
     released_at = Column(DateTime, nullable=True)
-    status = Column(String(32), default="ISOLATED", index=True, nullable=False)  # ISOLATED, RELEASED
+    status = Column(String(32), default="ISOLATED", index=True, nullable=False)  # ISOLATED, SIMULATED, RELEASED
     release_reason = Column(Text, nullable=True)
     execution_mode = Column(String(32), default="SIMULATED", nullable=False)

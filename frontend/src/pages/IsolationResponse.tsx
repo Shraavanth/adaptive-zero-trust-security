@@ -1,14 +1,17 @@
 import React, { useState, useEffect } from 'react';
 import { Lock, Unlock, ShieldAlert, RefreshCw, AlertTriangle, CheckCircle, Radio } from 'lucide-react';
 import { api } from '../services/api';
-import { ResponseAction } from '../types';
+import { ResponseAction, ResponsePreview } from '../types';
 
 export const IsolationResponse: React.FC = () => {
   const [actions, setActions] = useState<ResponseAction[]>([]);
   const [targetIp, setTargetIp] = useState('192.168.1.188');
-  const [actionType, setActionType] = useState('ISOLATE');
+  const [actionType, setActionType] = useState<ResponseAction['action_type']>('ISOLATE');
   const [reason, setReason] = useState('Manual SOC operator containment command');
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [preview, setPreview] = useState<ResponsePreview | null>(null);
+  const [previewError, setPreviewError] = useState<string | null>(null);
+  const [isPreviewing, setIsPreviewing] = useState(false);
 
   const fetchActions = async () => {
     try {
@@ -25,13 +28,27 @@ export const IsolationResponse: React.FC = () => {
     return () => clearInterval(interval);
   }, []);
 
+  const handlePreview = async () => {
+    setIsPreviewing(true);
+    setPreviewError(null);
+    try {
+      const data = await api.previewResponse(targetIp, actionType, reason);
+      setPreview(data);
+    } catch (err) {
+      setPreview(null);
+      setPreviewError(err instanceof Error ? err.message : String(err));
+    } finally {
+      setIsPreviewing(false);
+    }
+  };
+
   const handleExecute = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsSubmitting(true);
     try {
       await api.executeResponse(targetIp, actionType, reason, 'SIMULATED');
       await fetchActions();
-      alert(`Response action ${actionType} dispatched successfully for ${targetIp}.`);
+      alert(`Response action ${actionType} was recorded in SIMULATED mode for ${targetIp}; no network controls were changed.`);
     } catch (err) {
       alert(`Execution error: ${err}`);
     } finally {
@@ -48,7 +65,7 @@ export const IsolationResponse: React.FC = () => {
             Intelligent Traffic Isolation & Incident Containment
           </h2>
           <p className="text-xs text-soc-dim">
-            Authorized response workflow. Simulated containment active by default for enterprise safety.
+            SIMULATED mode only. Actions update local audit state and do not change network traffic or firewall policy.
           </p>
         </div>
         <button
@@ -64,13 +81,13 @@ export const IsolationResponse: React.FC = () => {
         <h3 className="font-bold text-soc-text mb-3 uppercase tracking-wider text-[11px] flex items-center gap-1.5">
           <Radio className="w-3.5 h-3.5 text-blue-400" /> Operator Containment Console
         </h3>
-        <form onSubmit={handleExecute} className="grid grid-cols-1 md:grid-cols-4 gap-3 items-end">
+        <form onSubmit={handleExecute} className="grid grid-cols-1 md:grid-cols-5 gap-3 items-end">
           <div>
             <label className="block text-soc-dim mb-1 font-medium">Target Entity / Host IP</label>
             <input
               type="text"
               value={targetIp}
-              onChange={(e) => setTargetIp(e.target.value)}
+              onChange={(e) => { setTargetIp(e.target.value); setPreview(null); }}
               className="w-full bg-soc-bg border border-soc-border rounded px-3 py-1.5 text-soc-text focus:outline-none focus:border-blue-500"
               placeholder="e.g. 192.168.1.188"
               required
@@ -80,7 +97,7 @@ export const IsolationResponse: React.FC = () => {
             <label className="block text-soc-dim mb-1 font-medium">Enforcement Operation</label>
             <select
               value={actionType}
-              onChange={(e) => setActionType(e.target.value)}
+              onChange={(e) => { setActionType(e.target.value as ResponseAction['action_type']); setPreview(null); }}
               className="w-full bg-soc-bg border border-soc-border rounded px-3 py-1.5 text-soc-text focus:outline-none focus:border-blue-500"
             >
               <option value="ISOLATE">ISOLATE (Full Quarantine)</option>
@@ -94,25 +111,56 @@ export const IsolationResponse: React.FC = () => {
             <input
               type="text"
               value={reason}
-              onChange={(e) => setReason(e.target.value)}
+              onChange={(e) => { setReason(e.target.value); setPreview(null); }}
               className="w-full bg-soc-bg border border-soc-border rounded px-3 py-1.5 text-soc-text focus:outline-none focus:border-blue-500"
               placeholder="Operational justification"
               required
             />
           </div>
-          <button
-            type="submit"
-            disabled={isSubmitting}
-            className={`w-full py-1.5 px-4 rounded font-bold transition-colors ${
-              actionType === 'RELEASE'
-                ? 'bg-emerald-600 hover:bg-emerald-500 text-white'
-                : 'bg-rose-600 hover:bg-rose-500 text-white'
-            }`}
-          >
-            {isSubmitting ? 'Enforcing...' : `Execute ${actionType}`}
-          </button>
+          <div className="flex gap-2">
+            <button
+              type="button"
+              onClick={handlePreview}
+              disabled={isPreviewing || !targetIp.trim() || !reason.trim()}
+              className="flex-1 rounded border border-blue-700 bg-blue-950/60 px-3 py-1.5 font-bold text-blue-200 transition-colors hover:bg-blue-900 disabled:cursor-not-allowed disabled:opacity-50"
+            >
+              {isPreviewing ? 'Previewing…' : 'Preview'}
+            </button>
+            <button
+              type="submit"
+              disabled={isSubmitting}
+              className={`flex-1 rounded px-3 py-1.5 font-bold transition-colors ${
+                actionType === 'RELEASE'
+                  ? 'bg-emerald-600 hover:bg-emerald-500 text-white'
+                  : 'bg-rose-600 hover:bg-rose-500 text-white'
+              }`}
+            >
+              {isSubmitting ? 'Recording…' : 'Record'}
+            </button>
+          </div>
         </form>
       </div>
+
+      {(preview || previewError) && (
+        <section aria-label="Response action preview" className="rounded-lg border border-blue-800/70 bg-blue-950/20 p-4 font-mono text-xs">
+          {previewError ? (
+            <p role="alert" className="text-rose-300">Unable to generate preview: {previewError}</p>
+          ) : preview && (
+            <>
+              <div className="flex flex-wrap items-center justify-between gap-2">
+                <h3 className="font-bold text-blue-200">Preview: {preview.action_type} for {preview.target_entity}</h3>
+                <span className="rounded border border-amber-800 bg-amber-950/60 px-2 py-1 text-[10px] font-bold text-amber-300">
+                  NO STATE CHANGED · SIMULATED ONLY
+                </span>
+              </div>
+              <p className="mt-2 text-soc-text">{preview.requested_operation}</p>
+              <p className="mt-1 text-soc-muted">Would update local records: {preview.affected_local_records.join(', ')}.</p>
+              <p className="mt-1 text-soc-muted">Suggested inverse: {preview.rollback_action ?? 'none'}.</p>
+              <p className="mt-2 text-[10px] text-amber-300">{preview.rollback_limitations}</p>
+            </>
+          )}
+        </section>
+      )}
 
       {/* Response Audit Table */}
       <div className="bg-soc-card border border-soc-border rounded-lg overflow-hidden">
@@ -149,8 +197,13 @@ export const IsolationResponse: React.FC = () => {
                     </td>
                     <td className="py-2.5 px-3 text-soc-dim">{a.execution_mode}</td>
                     <td className="py-2.5 px-3">
-                      <span className="inline-flex items-center gap-1 text-emerald-400 font-bold">
-                        <CheckCircle className="w-3 h-3" /> {a.execution_status}
+                      <span className={`inline-flex items-center gap-1 font-bold ${
+                        a.execution_status === 'SIMULATED' ? 'text-amber-400' : 'text-emerald-400'
+                      }`}>
+                        {a.execution_status === 'SIMULATED'
+                          ? <AlertTriangle className="w-3 h-3 text-amber-400" />
+                          : <CheckCircle className="w-3 h-3" />}
+                        {a.execution_status}
                       </span>
                     </td>
                     <td className="py-2.5 px-3 text-soc-dim max-w-xs truncate" title={a.requested_operation}>

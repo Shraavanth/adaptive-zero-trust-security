@@ -4,16 +4,6 @@ from sqlalchemy.orm import Session
 from app.models.trust import DeviceTrust, TrustHistory
 from app.core.config import settings
 
-PENALTY_MAP = {
-    "INFORMATIONAL": settings.PENALTY_INFORMATIONAL,
-    "INFO": settings.PENALTY_INFORMATIONAL,
-    "PHISHING": settings.PENALTY_PHISHING,
-    "DNS_SPOOFING": settings.PENALTY_DNS_SPOOFING,
-    "ARP_SPOOFING": settings.PENALTY_ARP_SPOOFING,
-    "PORT_SCAN": 20,
-    "ANOMALY": 10,
-}
-
 def determine_trust_state(score: int) -> str:
     if score >= settings.TRUSTED_THRESHOLD:
         return "TRUSTED"
@@ -70,7 +60,15 @@ def apply_event_penalty(
 
     # 3. Determine penalty amount
     category = str(event.get("category", "")).upper()
-    penalty = PENALTY_MAP.get(category, 10)
+    penalty = {
+        "INFORMATIONAL": settings.PENALTY_INFORMATIONAL,
+        "INFO": settings.PENALTY_INFORMATIONAL,
+        "PHISHING": settings.PENALTY_PHISHING,
+        "DNS_SPOOFING": settings.PENALTY_DNS_SPOOFING,
+        "ARP_SPOOFING": settings.PENALTY_ARP_SPOOFING,
+        "PORT_SCAN": 20,
+        "ANOMALY": 10,
+    }.get(category, 10)
 
     # 4. Calculate new score (bounded between 0 and 100)
     prev_score = device.current_trust_score

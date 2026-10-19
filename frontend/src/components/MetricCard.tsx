@@ -36,16 +36,16 @@ export const MetricCard: React.FC<MetricCardProps> = ({
   };
 
   return (
-    <div className={`bg-soc-card border ${borderMap[statusColor]} rounded-lg p-4 transition-all duration-150`}>
+    <div className={`rounded-xl bg-soc-card/95 border ${borderMap[statusColor]} p-4 shadow-lg shadow-black/10 transition-colors duration-200`}>
       <div className="flex items-center justify-between">
-        <span className="text-xs font-medium uppercase tracking-wider text-soc-muted">{title}</span>
-        <div className={`p-2 rounded-md ${iconBgMap[statusColor]}`}>{icon}</div>
+        <span className="text-[11px] font-semibold uppercase tracking-[0.12em] text-soc-muted">{title}</span>
+        <div className={`rounded-lg p-2 ${iconBgMap[statusColor]}`} aria-hidden="true">{icon}</div>
       </div>
       <div className="mt-2 flex items-baseline gap-2">
-        <span className="text-2xl font-bold font-mono tracking-tight text-soc-text">{value}</span>
+        <span className="text-2xl font-bold font-mono tracking-tight text-soc-text sm:text-3xl">{value}</span>
         {trend && <span className="text-xs font-mono text-soc-dim">{trend}</span>}
       </div>
-      {subtitle && <p className="mt-1 text-xs text-soc-dim truncate">{subtitle}</p>}
+      {subtitle && <p className="mt-1 truncate text-xs text-soc-dim">{subtitle}</p>}
     </div>
   );
 };
