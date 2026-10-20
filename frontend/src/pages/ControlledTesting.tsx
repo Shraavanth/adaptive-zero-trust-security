@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { FlaskConical, Play, CheckCircle2, ShieldAlert, Cpu, Check, Radio } from 'lucide-react';
+import { FlaskConical, Play, CheckCircle2, ShieldAlert, Cpu, Check, Radio, Loader2 } from 'lucide-react';
 import { api } from '../services/api';
 import { ScenarioResult } from '../types';
 
@@ -61,7 +61,7 @@ export const ControlledTesting: React.FC<{ onNavigate: (page: string) => void }>
 
   return (
     <div className="space-y-4 font-mono text-xs">
-      <div className="bg-soc-card border border-soc-border rounded-lg p-4 flex items-center justify-between">
+      <div className="page-head">
         <div>
           <h2 className="text-base font-bold text-soc-text flex items-center gap-2">
             <FlaskConical className="w-4 h-4 text-purple-400" />
@@ -73,20 +73,20 @@ export const ControlledTesting: React.FC<{ onNavigate: (page: string) => void }>
         </div>
         <button
           onClick={() => onNavigate('scenario-results')}
-          className="flex items-center gap-1.5 px-3 py-1.5 rounded bg-soc-bg hover:bg-soc-cardHover border border-soc-border text-soc-muted hover:text-soc-text transition-colors"
+          className="btn-ghost"
         >
           View All Historical Results →
         </button>
       </div>
 
       {/* Target Config */}
-      <div className="bg-soc-card border border-soc-border rounded-lg p-4 flex items-center gap-3">
+      <div className="panel p-4 flex items-center gap-3">
         <span className="text-soc-dim">TARGET LAB ENDPOINT:</span>
         <input
           type="text"
           value={targetIp}
           onChange={(e) => setTargetIp(e.target.value)}
-          className="bg-soc-bg border border-soc-border rounded px-3 py-1 text-soc-text w-48 focus:outline-none focus:border-blue-500"
+          className="inset-well px-3 py-1 text-soc-text w-48 focus:outline-none focus:border-blue-500"
         />
         <span className="text-[11px] text-soc-dim">
           Traffic will be simulated in CONTROLLED_LAB mode with zero risk to production network.
@@ -98,7 +98,7 @@ export const ControlledTesting: React.FC<{ onNavigate: (page: string) => void }>
         {testSuites.map((s) => {
           const isRunning = runningId === s.id;
           return (
-            <div key={s.id} className="bg-soc-card border border-soc-border rounded-lg p-4 space-y-3 flex flex-col justify-between">
+            <div key={s.id} className="panel p-4 space-y-3 flex flex-col justify-between">
               <div>
                 <div className="flex items-center justify-between">
                   <span className="text-[10px] font-bold text-blue-400">{s.id}</span>
@@ -108,7 +108,7 @@ export const ControlledTesting: React.FC<{ onNavigate: (page: string) => void }>
                 </div>
                 <h3 className="font-bold text-soc-text text-sm mt-1">{s.name}</h3>
                 <p className="text-soc-dim text-[11px] mt-1 leading-relaxed">{s.desc}</p>
-                <div className="mt-2 p-2 bg-soc-bg rounded border border-soc-border text-[11px] text-soc-muted">
+                <div className="mt-2 p-2 inset-well text-[11px] text-soc-muted">
                   <span className="text-soc-dim font-bold">Expected: </span>
                   {s.expected}
                 </div>
@@ -117,9 +117,11 @@ export const ControlledTesting: React.FC<{ onNavigate: (page: string) => void }>
               <button
                 onClick={() => handleRun(s.id)}
                 disabled={isRunning}
-                className="w-full py-2 px-3 rounded bg-blue-600 hover:bg-blue-500 text-white font-bold text-xs flex items-center justify-center gap-2 transition-colors disabled:opacity-50"
+                className="w-full py-2 px-3 rounded btn-signal font-bold text-xs flex items-center justify-center gap-2 transition-colors disabled:opacity-50"
               >
-                <Play className="w-3.5 h-3.5 fill-current" />
+                {isRunning
+                  ? <Loader2 aria-hidden="true" className="spin w-3.5 h-3.5" />
+                  : <Play aria-hidden="true" className="w-3.5 h-3.5 fill-current" />}
                 {isRunning ? 'Simulating Vector...' : 'Execute Controlled Test'}
               </button>
             </div>
@@ -129,10 +131,10 @@ export const ControlledTesting: React.FC<{ onNavigate: (page: string) => void }>
 
       {/* Execution Feedback Banner */}
       {lastResult && (
-        <div className="p-4 bg-soc-card border border-emerald-800/80 rounded-lg space-y-2">
+        <div key={lastResult.scenario_name + lastResult.duration_ms} className="success-pop p-4 bg-soc-card border border-emerald-800/80 rounded-lg space-y-2">
           <div className="flex items-center justify-between border-b border-soc-border pb-2">
             <span className="font-bold text-emerald-400 flex items-center gap-1.5">
-              <CheckCircle2 className="w-4 h-4 text-emerald-400" />
+              <CheckCircle2 className="check-draw w-4 h-4 text-emerald-400" />
               Scenario Execution Passed: {lastResult.scenario_name}
             </span>
             <span className="text-soc-dim">Duration: {lastResult.duration_ms.toFixed(1)} ms</span>

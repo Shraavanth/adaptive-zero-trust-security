@@ -55,7 +55,7 @@ export const SelfHealing: React.FC = () => {
 
   return (
     <div className="space-y-4 font-mono text-xs">
-      <div className="bg-soc-card border border-soc-border rounded-lg p-4 flex items-center justify-between">
+      <div className="page-head">
         <div>
           <h2 className="text-base font-bold text-soc-text flex items-center gap-2">
             <HeartPulse className="w-4 h-4 text-emerald-400" />
@@ -67,14 +67,14 @@ export const SelfHealing: React.FC = () => {
         </div>
         <button
           onClick={fetchPlans}
-          className="flex items-center gap-1.5 px-3 py-1.5 rounded bg-soc-bg hover:bg-soc-cardHover border border-soc-border text-soc-muted hover:text-soc-text transition-colors"
+          className="btn-ghost"
         >
           <RefreshCw className="w-3.5 h-3.5" /> Refresh Plans
         </button>
       </div>
 
       {/* Interactive Prerequisite Evaluator */}
-      <div className="bg-soc-card border border-soc-border rounded-lg p-5 space-y-4">
+      <div className="panel p-5 space-y-4">
         <h3 className="font-bold text-soc-text text-sm uppercase tracking-wider flex items-center gap-2">
           <ShieldCheck className="w-4 h-4 text-blue-400" /> Prerequisite Audit & Verification Console
         </h3>
@@ -87,21 +87,21 @@ export const SelfHealing: React.FC = () => {
               value={evalEntity}
               onChange={(e) => setEvalEntity(e.target.value)}
               placeholder="e.g. 192.168.1.188"
-              className="w-full bg-soc-bg border border-soc-border rounded px-3 py-2 text-soc-text focus:outline-none focus:border-blue-500"
+              className="w-full inset-well px-3 py-2 text-soc-text focus:outline-none focus:border-blue-500"
             />
           </div>
           <div className="flex items-end gap-2 pt-5">
             <button
               onClick={handleEvaluate}
               disabled={isEvaluating}
-              className="px-4 py-2 rounded bg-blue-600 hover:bg-blue-500 text-white font-bold transition-colors disabled:opacity-50"
+              className="px-4 py-2 rounded btn-signal font-bold transition-colors disabled:opacity-50"
             >
               {isEvaluating ? 'Evaluating...' : 'Audit Prerequisites'}
             </button>
             <button
               onClick={handleExecute}
               disabled={isExecuting || !evalResult?.prerequisites_satisfied}
-              className="px-4 py-2 rounded bg-emerald-600 hover:bg-emerald-500 text-white font-bold transition-colors disabled:opacity-40 disabled:cursor-not-allowed flex items-center gap-1.5"
+              className="px-4 py-2 rounded btn-signal font-bold transition-colors disabled:opacity-40 disabled:cursor-not-allowed flex items-center gap-1.5"
             >
               <Play className="w-3.5 h-3.5 fill-current" />
               {isExecuting ? 'Executing...' : 'Trigger Autonomous Recovery'}
@@ -110,7 +110,7 @@ export const SelfHealing: React.FC = () => {
         </div>
 
         {evalResult && (
-          <div className="p-4 bg-soc-bg border border-soc-border rounded-lg space-y-3">
+          <div className="p-4 inset-well-lg space-y-3">
             <div className="flex items-center justify-between border-b border-soc-border pb-2">
               <span className="font-bold text-soc-text">Audit Outcome for {evalResult.entity_id}:</span>
               <span className={`px-2.5 py-0.5 rounded text-xs font-bold border ${
@@ -123,7 +123,7 @@ export const SelfHealing: React.FC = () => {
             </div>
 
             <div className="grid grid-cols-1 md:grid-cols-2 gap-3 text-xs">
-              <div className="p-2.5 rounded bg-soc-card border border-soc-border space-y-1">
+              <div className="p-2.5 panel-flat space-y-1">
                 <div className="flex items-center gap-1.5 font-bold">
                   {breakdown.clean_window_satisfied ? <CheckCircle2 className="w-4 h-4 text-emerald-400" /> : <XCircle className="w-4 h-4 text-rose-400" />}
                   <span>1. 5-Minute Clean Window</span>
@@ -131,7 +131,7 @@ export const SelfHealing: React.FC = () => {
                 <p className="text-soc-dim text-[11px]">{breakdown.clean_window_details}</p>
               </div>
 
-              <div className="p-2.5 rounded bg-soc-card border border-soc-border space-y-1">
+              <div className="p-2.5 panel-flat space-y-1">
                 <div className="flex items-center gap-1.5 font-bold">
                   {breakdown.trust_score_satisfied ? <CheckCircle2 className="w-4 h-4 text-emerald-400" /> : <XCircle className="w-4 h-4 text-rose-400" />}
                   <span>2. Device Trust Score (&ge; 80)</span>
@@ -139,7 +139,7 @@ export const SelfHealing: React.FC = () => {
                 <p className="text-soc-dim text-[11px]">{breakdown.trust_score_details}</p>
               </div>
 
-              <div className="p-2.5 rounded bg-soc-card border border-soc-border space-y-1">
+              <div className="p-2.5 panel-flat space-y-1">
                 <div className="flex items-center gap-1.5 font-bold">
                   {breakdown.behavior_risk_satisfied ? <CheckCircle2 className="w-4 h-4 text-emerald-400" /> : <XCircle className="w-4 h-4 text-rose-400" />}
                   <span>3. Behavior Risk Score (&lt; 70)</span>
@@ -147,7 +147,7 @@ export const SelfHealing: React.FC = () => {
                 <p className="text-soc-dim text-[11px]">{breakdown.behavior_risk_details}</p>
               </div>
 
-              <div className="p-2.5 rounded bg-soc-card border border-soc-border space-y-1">
+              <div className="p-2.5 panel-flat space-y-1">
                 <div className="flex items-center gap-1.5 font-bold">
                   {breakdown.repeat_policy_satisfied ? <CheckCircle2 className="w-4 h-4 text-emerald-400" /> : <XCircle className="w-4 h-4 text-rose-400" />}
                   <span>4. Repeat Offender Compliance</span>
@@ -160,10 +160,10 @@ export const SelfHealing: React.FC = () => {
       </div>
 
       {/* Recovery Plans Table */}
-      <div className="bg-soc-card border border-soc-border rounded-lg overflow-hidden">
+      <div className="panel overflow-hidden">
         <div className="overflow-x-auto">
           <table className="w-full text-left">
-            <thead className="bg-soc-bg/90 border-b border-soc-border text-soc-dim text-[11px] uppercase tracking-wider select-none">
+            <thead className="thead-soc">
               <tr>
                 <th className="py-2.5 px-3">Plan ID</th>
                 <th className="py-2.5 px-3">Candidate Entity</th>

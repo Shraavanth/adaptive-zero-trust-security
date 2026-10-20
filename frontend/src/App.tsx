@@ -1,6 +1,14 @@
-import React, { useState, useEffect, useCallback } from 'react';
-import { Sidebar } from './components/Sidebar';
-import { Topbar } from './components/Topbar';
+import React, { useState, useEffect, useCallback, useMemo, useRef } from 'react';
+import { BootSplash } from './components/BootSplash';
+import { Ambient } from './components/shell/Ambient';
+import { BrandMark } from './components/shell/BrandMark';
+import { NavIsland } from './components/shell/NavIsland';
+import { CaptureIsland } from './components/shell/CaptureIsland';
+import { PageHero } from './components/shell/PageHero';
+import { CommandPalette } from './components/shell/CommandPalette';
+import { MobileMenu } from './components/shell/MobileMenu';
+import { NAV_GROUPS, findPage } from './lib/nav';
+import { TelemetryContext } from './lib/telemetry';
 import { useLivePacketStream, api } from './services/api';
 import { Packet, OperatingMode } from './types';
 
@@ -34,9 +42,12 @@ export const App: React.FC = () => {
   const [isCapturing, setIsCapturing] = useState<boolean>(false);
   const [recentPackets, setRecentPackets] = useState<Packet[]>([]);
   const [packetRate, setPacketRate] = useState<number>(0);
+  const [rateHistory, setRateHistory] = useState<number[]>(() => Array(24).fill(0));
   const [threatCount, setThreatCount] = useState<number>(0);
-  const [isolatedCount, setIsolatedCount] = useState<number>(0);
-  const [mobileNavOpen, setMobileNavOpen] = useState(false);
+  const [lastThreatAt, setLastThreatAt] = useState<number>(0);
+  const [threatActive, setThreatActive] = useState(false);
+  const [menuOpen, setMenuOpen] = useState(false);
+  const [commandOpen, setCommandOpen] = useState(false);
   const [serviceError, setServiceError] = useState<string | null>(null);
 
   // Poll capture status and counts
@@ -45,14 +56,12 @@ export const App: React.FC = () => {
       const status = await api.getCaptureStatus();
       setIsCapturing(status.is_capturing);
       if (status.current_interface) setSelectedInterface(status.current_interface);
-      if (status.stats?.packets_per_sec !== undefined) setPacketRate(status.stats.packets_per_sec);
+      if (status.stats?.packets_per_sec !== undefined) {
+        const rate = status.stats.packets_per_sec;
+        setPacketRate(rate);
+        setRateHistory((h) => [...h.slice(1), rate]);
+      }
       if (status.stats?.malicious_packets !== undefined) setThreatCount(status.stats.malicious_packets);
-
-      const isolations = await api.getIsolations();
-      const activeIso = isolations.filter((i: any) =>
-        i.status === 'ISOLATED' && i.execution_mode !== 'SIMULATED'
-      ).length;
-      setIsolatedCount(activeIso);
       setServiceError(null);
     } catch (err) {
       setServiceError(`Backend status unavailable: ${err instanceof Error ? err.message : String(err)}`);
@@ -70,10 +79,19 @@ export const App: React.FC = () => {
     setRecentPackets((prev) => [pkt, ...prev.slice(0, 100)]);
     if (pkt.detection_status === 'MALICIOUS') {
       setThreatCount((prev) => prev + 1);
+      setLastThreatAt(Date.now());
     }
   }, []);
 
   const { isConnected } = useLivePacketStream(handleNewPacket);
+
+  // The ambient threat bloom stays lit for a few seconds after the last hit
+  useEffect(() => {
+    if (!lastThreatAt) return;
+    setThreatActive(true);
+    const t = window.setTimeout(() => setThreatActive(false), 6000);
+    return () => window.clearTimeout(t);
+  }, [lastThreatAt]);
 
   // Toggle capture action
   const handleToggleCapture = async () => {
@@ -87,46 +105,68 @@ export const App: React.FC = () => {
       }
       checkStatus();
     } catch (err) {
-      alert(`Capture command error: ${err}`);
+      setServiceError(`Capture command failed: ${err instanceof Error ? err.message : String(err)}`);
     }
   };
 
-  const handleNavigate = (page: string) => {
+  const handleNavigate = useCallback((page: string) => {
     setActivePage(page);
-    setMobileNavOpen(false);
-  };
+    setMenuOpen(false);
+    window.scrollTo({ top: 0, behavior: 'instant' as ScrollBehavior });
+  }, []);
 
-  const getPageTitle = () => {
-    switch (activePage) {
-      case 'overview': return 'Executive Overview';
-      case 'live-monitor': return 'Live Packet Monitor';
-      case 'flows': return 'Network Flow Telemetry';
-      case 'threats': return 'Cyber Threat Detection';
-      case 'investigations': return 'Investigation Center';
-      case 'device-trust': return 'Device Trust Scores';
-      case 'zt-decisions': return 'Zero Trust Access Decisions';
-      case 'repeat-offenders': return 'Repeat Offender Timeline';
-      case 'isolation-response': return 'Traffic Isolation & Response';
-      case 'self-healing': return 'Self-Healing Engine';
-      case 'honeypots': return 'Autonomous Honeypot Monitoring';
-      case 'audit-trail': return 'Security Response Audit Trail';
-      case 'controlled-testing': return 'Controlled Testing Suite';
-      case 'scenario-results': return 'Scenario Verification Results';
-      case 'topology': return 'Network Topology Map';
-      case 'reports': return 'Compliance Reports & Analytics';
-      case 'interfaces': return 'Network Adapters & Drivers';
-      case 'sessions': return 'Capture Sessions & Replay';
-      case 'diagnostics': return 'System Diagnostics & Health';
-      case 'settings': return 'System Parameters & Policies';
-      case 'documentation': return 'Architecture & API Documentation';
-      default: return 'SOC Dashboard';
-    }
-  };
+  const current = findPage(activePage);
+
+  // ⌘K / Ctrl+K opens the page switcher
+  useEffect(() => {
+    const onKey = (e: KeyboardEvent) => {
+      if ((e.metaKey || e.ctrlKey) && e.key.toLowerCase() === 'k') {
+        e.preventDefault();
+        setCommandOpen((o) => !o);
+      }
+    };
+    window.addEventListener('keydown', onKey);
+    return () => window.removeEventListener('keydown', onKey);
+  }, []);
+
+  // Panel border spotlight follows a fine pointer. Each panel gets its own
+  // coordinates — nothing is driven through a shared parent variable.
+  const spotFrame = useRef(0);
+  useEffect(() => {
+    if (!window.matchMedia('(hover: hover) and (pointer: fine)').matches) return;
+    let last: HTMLElement | null = null;
+    const onMove = (e: PointerEvent) => {
+      cancelAnimationFrame(spotFrame.current);
+      spotFrame.current = requestAnimationFrame(() => {
+        const panel = (e.target as Element | null)?.closest?.('.panel') as HTMLElement | null;
+        if (last && last !== panel) {
+          last.style.removeProperty('--mx');
+          last.style.removeProperty('--my');
+        }
+        if (panel) {
+          const r = panel.getBoundingClientRect();
+          panel.style.setProperty('--mx', `${e.clientX - r.left}px`);
+          panel.style.setProperty('--my', `${e.clientY - r.top}px`);
+        }
+        last = panel;
+      });
+    };
+    window.addEventListener('pointermove', onMove, { passive: true });
+    return () => {
+      window.removeEventListener('pointermove', onMove);
+      cancelAnimationFrame(spotFrame.current);
+    };
+  }, []);
+
+  const telemetry = useMemo(
+    () => ({ packets: recentPackets, packetRate, rateHistory, isCapturing, isConnected, threatCount, threatActive }),
+    [recentPackets, packetRate, rateHistory, isCapturing, isConnected, threatCount, threatActive]
+  );
 
   const renderPage = () => {
     switch (activePage) {
       case 'overview':
-        return <Overview onNavigate={setActivePage} />;
+        return <Overview onNavigate={handleNavigate} />;
       case 'live-monitor':
         return <LiveMonitor packets={recentPackets} isCapturing={isCapturing} onToggleCapture={handleToggleCapture} />;
       case 'flows':
@@ -150,7 +190,7 @@ export const App: React.FC = () => {
       case 'audit-trail':
         return <AuditTrail />;
       case 'controlled-testing':
-        return <ControlledTesting onNavigate={setActivePage} />;
+        return <ControlledTesting onNavigate={handleNavigate} />;
       case 'scenario-results':
         return <ScenarioResults />;
       case 'topology':
@@ -173,49 +213,79 @@ export const App: React.FC = () => {
       case 'documentation':
         return <Documentation />;
       default:
-        return <Overview onNavigate={setActivePage} />;
+        return <Overview onNavigate={handleNavigate} />;
     }
   };
 
   return (
-    <div className="flex h-screen bg-soc-bg text-soc-text overflow-hidden select-none">
-      {/* Persistent Left Sidebar */}
-      <Sidebar
-        activePage={activePage}
-        onNavigate={handleNavigate}
-        threatCount={threatCount}
-        isolatedCount={isolatedCount}
-        isOpen={mobileNavOpen}
-        onClose={() => setMobileNavOpen(false)}
-      />
+    <TelemetryContext.Provider value={telemetry}>
+      <div className="relative min-h-[100dvh] bg-soc-bg text-soc-text">
+        <Ambient threat={threatActive} />
 
-      {/* Main Container */}
-      <div className="flex-1 flex flex-col min-w-0 overflow-hidden">
-        {/* Compact Topbar */}
-        <Topbar
-          pageTitle={getPageTitle()}
-          isCapturing={isCapturing}
-          currentMode={currentMode}
-          selectedInterface={selectedInterface}
-          onToggleCapture={handleToggleCapture}
-          onChangeMode={setCurrentMode}
-          packetRate={packetRate}
-          isConnected={isConnected}
-          onOpenMenu={() => setMobileNavOpen(true)}
-        />
+        <a
+          href="#main"
+          className="sr-only focus:not-sr-only focus:fixed focus:left-4 focus:top-4 focus:z-modal focus:rounded-full focus:bg-signal-400 focus:px-4 focus:py-2 focus:text-sm focus:font-medium focus:text-[#0b1006]"
+        >
+          Skip to content
+        </a>
 
-        {/* Scrollable Main Content */}
-        <main className="soc-main min-h-0 flex-1 overflow-y-auto p-3 sm:p-5 lg:p-6">
-          <div className="mx-auto w-full max-w-[1600px]">
-            {serviceError && (
-              <div role="alert" className="mb-4 rounded-lg border border-rose-800 bg-rose-950/70 px-4 py-3 text-sm text-rose-200">
-                {serviceError}
-              </div>
-            )}
+        {/* Content fades out beneath the floating chrome */}
+        <div aria-hidden="true" className="pointer-events-none fixed inset-x-0 top-0 z-nav h-28 bg-gradient-to-b from-soc-bg via-soc-bg/80 to-transparent" />
+
+        <header className="sticky top-0 z-nav px-3 pt-3 sm:px-5 lg:px-8 lg:pt-5">
+          <div className="mx-auto flex max-w-[1480px] items-center justify-between gap-3">
+            <BrandMark live={isCapturing} onClick={() => handleNavigate('overview')} />
+            <NavIsland
+              activeGroup={current.group.id}
+              threatCount={threatCount}
+              onSelectGroup={(gid) => handleNavigate(NAV_GROUPS.find((g) => g.id === gid)!.pages[0].id)}
+              onOpenCommand={() => setCommandOpen(true)}
+            />
+            <div className="flex items-center gap-2">
+              <CaptureIsland
+                isCapturing={isCapturing}
+                isConnected={isConnected}
+                currentMode={currentMode}
+                selectedInterface={selectedInterface}
+                packetRate={packetRate}
+                rateHistory={rateHistory}
+                onChangeMode={setCurrentMode}
+                onToggleCapture={handleToggleCapture}
+              />
+              <button
+                type="button"
+                aria-label={menuOpen ? 'Close navigation' : 'Open navigation'}
+                aria-expanded={menuOpen}
+                aria-controls="mobile-menu"
+                onClick={() => setMenuOpen((o) => !o)}
+                className="burger glass relative h-12 w-12 shrink-0 rounded-full text-soc-text lg:hidden"
+              >
+                <span />
+                <span />
+              </button>
+            </div>
+          </div>
+        </header>
+
+        <main id="main" className="relative z-[2] mx-auto max-w-[1480px] px-3 pb-28 sm:px-5 lg:px-8">
+          <PageHero group={current.group} page={current} onNavigate={handleNavigate} />
+
+          {serviceError && (
+            <div role="alert" className="mt-6 flex items-center gap-3 rounded-2xl bg-rose-500/10 px-4 py-3 text-sm text-rose-200 shadow-[inset_0_0_0_1px_rgb(242_122_110/0.3)]">
+              <span aria-hidden="true" className="h-1.5 w-1.5 shrink-0 rounded-full bg-rose-400" />
+              {serviceError}
+            </div>
+          )}
+
+          <div key={activePage} className="page-enter mt-8 sm:mt-10">
             {renderPage()}
           </div>
         </main>
+
+        <MobileMenu open={menuOpen} activePage={activePage} onNavigate={handleNavigate} onClose={() => setMenuOpen(false)} />
+        <CommandPalette open={commandOpen} onClose={() => setCommandOpen(false)} onNavigate={handleNavigate} />
+        <BootSplash />
       </div>
-    </div>
+    </TelemetryContext.Provider>
   );
 };

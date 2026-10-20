@@ -55,7 +55,7 @@ export const ThreatDetection: React.FC = () => {
   return (
     <div className="space-y-4">
       {/* Top Banner */}
-      <div className="bg-soc-card border border-soc-border rounded-lg p-4 flex flex-wrap items-center justify-between gap-3">
+      <div className="page-head">
         <div>
           <h2 className="text-base font-bold text-soc-text font-mono flex items-center gap-2">
             <AlertTriangle className="w-4 h-4 text-rose-400" />
@@ -67,14 +67,14 @@ export const ThreatDetection: React.FC = () => {
         </div>
         <button
           onClick={fetchThreats}
-          className="flex items-center gap-1.5 px-3 py-1.5 rounded bg-soc-bg hover:bg-soc-cardHover border border-soc-border text-xs font-mono text-soc-muted hover:text-soc-text transition-colors"
+          className="btn-ghost"
         >
           <RefreshCw className="w-3.5 h-3.5" /> Refresh Threats
         </button>
       </div>
 
       {/* Filter Row */}
-      <div className="bg-soc-card border border-soc-border rounded-lg p-3 flex flex-wrap items-center gap-3 text-xs font-mono">
+      <div className="panel p-3 flex flex-wrap items-center gap-3 text-xs font-mono">
         <div className="flex-1 min-w-[200px] relative">
           <Search className="w-3.5 h-3.5 absolute left-3 top-2.5 text-soc-dim" />
           <input
@@ -82,7 +82,7 @@ export const ThreatDetection: React.FC = () => {
             placeholder="Search Event ID, Offending IP, Domain or Rule..."
             value={search}
             onChange={(e) => setSearch(e.target.value)}
-            className="w-full bg-soc-bg border border-soc-border rounded pl-9 pr-3 py-1.5 text-soc-text placeholder:text-soc-dim focus:outline-none focus:border-blue-500"
+            className="w-full inset-well pl-9 pr-3 py-1.5 text-soc-text placeholder:text-soc-dim focus:outline-none focus:border-blue-500"
           />
         </div>
 
@@ -91,7 +91,7 @@ export const ThreatDetection: React.FC = () => {
           <select
             value={categoryFilter}
             onChange={(e) => setCategoryFilter(e.target.value)}
-            className="bg-soc-bg border border-soc-border rounded px-2.5 py-1.5 text-soc-text focus:outline-none focus:border-blue-500"
+            className="inset-well px-2.5 py-1.5 text-soc-text focus:outline-none focus:border-blue-500"
           >
             <option value="ALL">ALL</option>
             <option value="PHISHING">PHISHING</option>
@@ -106,7 +106,7 @@ export const ThreatDetection: React.FC = () => {
           <select
             value={severityFilter}
             onChange={(e) => setSeverityFilter(e.target.value)}
-            className="bg-soc-bg border border-soc-border rounded px-2.5 py-1.5 text-soc-text focus:outline-none focus:border-blue-500"
+            className="inset-well px-2.5 py-1.5 text-soc-text focus:outline-none focus:border-blue-500"
           >
             <option value="ALL">ALL</option>
             <option value="CRITICAL">CRITICAL</option>
@@ -120,10 +120,10 @@ export const ThreatDetection: React.FC = () => {
       {/* Grid: Events Table + Evidence Inspector Drawer */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
         {/* Threat Table */}
-        <div className="lg:col-span-2 bg-soc-card border border-soc-border rounded-lg overflow-hidden">
+        <div className="lg:col-span-2 panel overflow-hidden">
           <div className="overflow-x-auto">
             <table className="w-full text-left text-xs font-mono">
-              <thead className="bg-soc-bg/90 border-b border-soc-border text-soc-dim text-[11px] uppercase tracking-wider select-none">
+              <thead className="thead-soc">
                 <tr>
                   <th className="py-2.5 px-3">Event ID</th>
                   <th className="py-2.5 px-3">Category</th>
@@ -175,7 +175,7 @@ export const ThreatDetection: React.FC = () => {
         </div>
 
         {/* Selected Threat Evidence Inspector */}
-        <div className="bg-soc-card border border-soc-border rounded-lg p-4 font-mono text-xs space-y-4">
+        <div className="panel p-4 font-mono text-xs space-y-4">
           <div className="border-b border-soc-border pb-2 flex items-center justify-between">
             <h3 className="font-bold text-soc-text text-sm uppercase tracking-wider">Threat Evidence</h3>
             {selectedThreat && <SeverityBadge severity={selectedThreat.severity} />}

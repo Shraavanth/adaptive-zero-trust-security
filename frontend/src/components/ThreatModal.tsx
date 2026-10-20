@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { X, ShieldAlert, Check } from 'lucide-react';
 import { SecurityEvent } from '../types';
 import { api } from '../services/api';
+import { usePresence } from '../hooks/usePresence';
 
 interface ThreatModalProps {
   event: SecurityEvent | null;
@@ -9,12 +10,13 @@ interface ThreatModalProps {
   onInvestigationCreated?: () => void;
 }
 
-export const ThreatModal: React.FC<ThreatModalProps> = ({ event, onClose, onInvestigationCreated }) => {
+export const ThreatModal: React.FC<ThreatModalProps> = ({ event: incomingEvent, onClose, onInvestigationCreated }) => {
   const [title, setTitle] = useState('');
   const [priority, setPriority] = useState('HIGH');
   const [notes, setNotes] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [success, setSuccess] = useState(false);
+  const { rendered: event, state } = usePresence(incomingEvent, 250);
 
   if (!event) return null;
 
@@ -41,8 +43,8 @@ export const ThreatModal: React.FC<ThreatModalProps> = ({ event, onClose, onInve
   };
 
   return (
-    <div className="fixed inset-0 bg-black/70 backdrop-blur-sm z-50 flex items-center justify-center p-4">
-      <div className="bg-soc-card border border-soc-border rounded-lg max-w-lg w-full p-5 shadow-2xl space-y-4">
+    <div data-overlay data-state={state} className="overlay-backdrop fixed inset-0 bg-black/70 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+      <div data-state={state} className="modal-panel panel max-w-lg w-full p-5 space-y-4">
         <div className="flex items-center justify-between border-b border-soc-border pb-3">
           <div className="flex items-center gap-2">
             <ShieldAlert className="w-5 h-5 text-rose-400" />
@@ -54,7 +56,7 @@ export const ThreatModal: React.FC<ThreatModalProps> = ({ event, onClose, onInve
         </div>
 
         {/* Incident Summary */}
-        <div className="bg-soc-bg rounded p-3 border border-soc-border text-xs space-y-1 font-mono">
+        <div className="inset-well p-3 text-xs space-y-1 font-mono">
           <p><span className="text-soc-muted">Event ID:</span> <span className="text-blue-400 font-bold">{event.id}</span></p>
           <p><span className="text-soc-muted">Category:</span> <span className="text-rose-400 font-bold">{event.category}</span></p>
           <p><span className="text-soc-muted">Offender IP:</span> <span className="text-soc-text">{event.src_ip}</span></p>
@@ -62,8 +64,8 @@ export const ThreatModal: React.FC<ThreatModalProps> = ({ event, onClose, onInve
         </div>
 
         {success ? (
-          <div className="p-4 bg-emerald-950/60 border border-emerald-800 text-emerald-300 rounded text-center text-xs font-mono flex items-center justify-center gap-2">
-            <Check className="w-4 h-4 text-emerald-400" />
+          <div className="success-pop p-4 bg-emerald-950/60 border border-emerald-800 text-emerald-300 rounded text-center text-xs font-mono flex items-center justify-center gap-2">
+            <Check className="check-draw w-4 h-4 text-emerald-400" />
             <span>Case escalated to Investigation Center successfully!</span>
           </div>
         ) : (
@@ -75,7 +77,7 @@ export const ThreatModal: React.FC<ThreatModalProps> = ({ event, onClose, onInve
                 value={title}
                 onChange={(e) => setTitle(e.target.value)}
                 placeholder={`Investigation: ${event.category} on ${event.src_ip}`}
-                className="w-full bg-soc-bg border border-soc-border rounded px-3 py-1.5 text-soc-text focus:outline-none focus:border-blue-500 font-mono"
+                className="w-full inset-well px-3 py-1.5 text-soc-text focus:outline-none focus:border-blue-500 font-mono"
               />
             </div>
 
@@ -84,7 +86,7 @@ export const ThreatModal: React.FC<ThreatModalProps> = ({ event, onClose, onInve
               <select
                 value={priority}
                 onChange={(e) => setPriority(e.target.value)}
-                className="w-full bg-soc-bg border border-soc-border rounded px-3 py-1.5 text-soc-text focus:outline-none focus:border-blue-500 font-mono"
+                className="w-full inset-well px-3 py-1.5 text-soc-text focus:outline-none focus:border-blue-500 font-mono"
               >
                 <option value="CRITICAL">CRITICAL</option>
                 <option value="HIGH">HIGH</option>
@@ -100,7 +102,7 @@ export const ThreatModal: React.FC<ThreatModalProps> = ({ event, onClose, onInve
                 onChange={(e) => setNotes(e.target.value)}
                 rows={3}
                 placeholder="Document observed indicators, impact scope, and recommended containment steps..."
-                className="w-full bg-soc-bg border border-soc-border rounded px-3 py-1.5 text-soc-text focus:outline-none focus:border-blue-500 font-mono"
+                className="w-full inset-well px-3 py-1.5 text-soc-text focus:outline-none focus:border-blue-500 font-mono"
               />
             </div>
 
@@ -115,7 +117,7 @@ export const ThreatModal: React.FC<ThreatModalProps> = ({ event, onClose, onInve
               <button
                 type="submit"
                 disabled={isSubmitting}
-                className="px-4 py-1.5 rounded bg-blue-600 hover:bg-blue-500 text-white font-mono font-medium disabled:opacity-50"
+                className="px-4 py-1.5 rounded btn-signal font-mono font-medium disabled:opacity-50"
               >
                 {isSubmitting ? 'Escalating...' : 'Create Investigation'}
               </button>

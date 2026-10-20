@@ -3,12 +3,14 @@ import { KeyRound, RefreshCw, History, ShieldAlert, X, AlertTriangle } from 'luc
 import { api } from '../services/api';
 import { DeviceTrust as DeviceTrustType, TrustHistory } from '../types';
 import { TrustBadge } from '../components/Badge';
+import { usePresence } from '../hooks/usePresence';
 
 export const DeviceTrust: React.FC = () => {
   const [devices, setDevices] = useState<DeviceTrustType[]>([]);
   const [selectedEntity, setSelectedEntity] = useState<string | null>(null);
   const [history, setHistory] = useState<TrustHistory[]>([]);
   const [loadingHistory, setLoadingHistory] = useState(false);
+  const { rendered: historyEntity, state: historyState } = usePresence(selectedEntity, 250);
 
   const fetchDevices = async () => {
     try {
@@ -40,7 +42,7 @@ export const DeviceTrust: React.FC = () => {
 
   return (
     <div className="space-y-4">
-      <div className="bg-soc-card border border-soc-border rounded-lg p-4 flex items-center justify-between">
+      <div className="page-head">
         <div>
           <h2 className="text-base font-bold text-soc-text font-mono flex items-center gap-2">
             <KeyRound className="w-4 h-4 text-emerald-400" />
@@ -52,17 +54,17 @@ export const DeviceTrust: React.FC = () => {
         </div>
         <button
           onClick={fetchDevices}
-          className="flex items-center gap-1.5 px-3 py-1.5 rounded bg-soc-bg hover:bg-soc-cardHover border border-soc-border text-xs font-mono text-soc-muted hover:text-soc-text transition-colors"
+          className="btn-ghost"
         >
           <RefreshCw className="w-3.5 h-3.5" /> Refresh Trust
         </button>
       </div>
 
       {/* Trust Table */}
-      <div className="bg-soc-card border border-soc-border rounded-lg overflow-hidden">
+      <div className="panel overflow-hidden">
         <div className="overflow-x-auto">
           <table className="w-full text-left text-xs font-mono">
-            <thead className="bg-soc-bg/90 border-b border-soc-border text-soc-dim text-[11px] uppercase tracking-wider select-none">
+            <thead className="thead-soc">
               <tr>
                 <th className="py-2.5 px-3">Entity / IP</th>
                 <th className="py-2.5 px-3">MAC Address</th>
@@ -85,7 +87,7 @@ export const DeviceTrust: React.FC = () => {
                         <span className="font-bold text-base text-soc-text">{d.current_trust_score}</span>
                         <div className="w-16 bg-slate-800 rounded-full h-1.5 overflow-hidden">
                           <div
-                            className={`h-full ${
+                            className={`bar-fill h-full w-full ${
                               d.current_trust_score >= 80
                                 ? 'bg-emerald-400'
                                 : d.current_trust_score >= 60
@@ -94,7 +96,7 @@ export const DeviceTrust: React.FC = () => {
                                 ? 'bg-orange-500'
                                 : 'bg-rose-500'
                             }`}
-                            style={{ width: `${d.current_trust_score}%` }}
+                            style={{ transform: `scaleX(${Math.max(0, Math.min(100, d.current_trust_score)) / 100})` }}
                           />
                         </div>
                       </div>
@@ -134,13 +136,13 @@ export const DeviceTrust: React.FC = () => {
       </div>
 
       {/* History Modal */}
-      {selectedEntity && (
-        <div className="fixed inset-0 bg-black/70 backdrop-blur-sm z-50 flex items-center justify-center p-4">
-          <div className="bg-soc-card border border-soc-border rounded-lg max-w-xl w-full p-5 shadow-2xl font-mono text-xs space-y-4">
+      {historyEntity && (
+        <div data-overlay data-state={historyState} className="overlay-backdrop fixed inset-0 bg-black/70 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+          <div data-state={historyState} className="modal-panel panel max-w-xl w-full p-5 font-mono text-xs space-y-4">
             <div className="flex items-center justify-between border-b border-soc-border pb-3">
               <div className="flex items-center gap-2">
                 <History className="w-4 h-4 text-blue-400" />
-                <h3 className="font-bold text-soc-text text-sm">Trust Score Audit Log: {selectedEntity}</h3>
+                <h3 className="font-bold text-soc-text text-sm">Trust Score Audit Log: {historyEntity}</h3>
               </div>
               <button onClick={() => setSelectedEntity(null)} className="text-soc-muted hover:text-soc-text">
                 <X className="w-4 h-4" />
@@ -150,7 +152,7 @@ export const DeviceTrust: React.FC = () => {
             <div className="max-h-80 overflow-y-auto space-y-2">
               {history.length > 0 ? (
                 history.map((h) => (
-                  <div key={h.id} className="p-3 bg-soc-bg border border-soc-border rounded space-y-1">
+                  <div key={h.id} className="p-3 inset-well space-y-1">
                     <div className="flex items-center justify-between">
                       <span className="text-soc-dim">{new Date(h.timestamp).toLocaleString()}</span>
                       <span className="font-bold text-rose-400">-{h.penalty_applied} Points</span>

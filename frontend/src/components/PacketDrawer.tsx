@@ -2,6 +2,7 @@ import React from 'react';
 import { X, ShieldAlert, Cpu, Network, Info } from 'lucide-react';
 import { Packet } from '../types';
 import { SeverityBadge, ModeBadge } from './Badge';
+import { usePresence } from '../hooks/usePresence';
 
 interface PacketDrawerProps {
   packet: Packet | null;
@@ -9,7 +10,8 @@ interface PacketDrawerProps {
   maskData?: boolean;
 }
 
-export const PacketDrawer: React.FC<PacketDrawerProps> = ({ packet, onClose, maskData = false }) => {
+export const PacketDrawer: React.FC<PacketDrawerProps> = ({ packet: incomingPacket, onClose, maskData = false }) => {
+  const { rendered: packet, state } = usePresence(incomingPacket, 400);
   if (!packet) return null;
 
   const maskIp = (ip: string) => {
@@ -25,9 +27,9 @@ export const PacketDrawer: React.FC<PacketDrawerProps> = ({ packet, onClose, mas
   };
 
   return (
-    <div className="fixed inset-y-0 right-0 w-full max-w-xl bg-soc-card border-l border-soc-border shadow-2xl z-50 flex flex-col font-mono text-xs">
+    <div data-overlay data-state={state} className="drawer-panel glass fixed inset-y-2 right-2 w-[calc(100%-1rem)] max-w-xl rounded-[24px] overflow-hidden z-50 flex flex-col font-mono text-xs">
       {/* Drawer Header */}
-      <div className="p-4 border-b border-soc-border flex items-center justify-between bg-soc-bg/60">
+      <div className="px-5 py-4 border-b border-white/[0.06] flex items-center justify-between">
         <div className="flex items-center gap-2">
           <Network className="w-4 h-4 text-blue-400" />
           <span className="font-semibold text-soc-text text-sm">Packet Inspection #{packet.id}</span>
@@ -66,7 +68,7 @@ export const PacketDrawer: React.FC<PacketDrawerProps> = ({ packet, onClose, mas
             <Cpu className="w-3.5 h-3.5 text-blue-400" />
             Layer 3 / 4 Headers ({packet.ip_version})
           </h4>
-          <div className="bg-soc-bg rounded p-3 border border-soc-border space-y-1.5">
+          <div className="inset-well p-3 space-y-1.5">
             <div className="flex justify-between py-1 border-b border-soc-border/40">
               <span className="text-soc-muted">Source IP:</span>
               <span className="text-soc-text font-bold">{maskIp(packet.src_ip)}</span>
@@ -104,7 +106,7 @@ export const PacketDrawer: React.FC<PacketDrawerProps> = ({ packet, onClose, mas
             <Network className="w-3.5 h-3.5 text-purple-400" />
             Layer 2 Data Link (Ethernet)
           </h4>
-          <div className="bg-soc-bg rounded p-3 border border-soc-border space-y-1.5">
+          <div className="inset-well p-3 space-y-1.5">
             <div className="flex justify-between py-1 border-b border-soc-border/40">
               <span className="text-soc-muted">Source MAC:</span>
               <span className="text-soc-text">{maskMac(packet.src_mac)}</span>
@@ -155,7 +157,7 @@ export const PacketDrawer: React.FC<PacketDrawerProps> = ({ packet, onClose, mas
               <Info className="w-3.5 h-3.5 text-cyan-400" />
               DNS Payload Metadata
             </h4>
-            <div className="bg-soc-bg rounded p-3 border border-soc-border space-y-1.5">
+            <div className="inset-well p-3 space-y-1.5">
               <div className="flex justify-between py-1 border-b border-soc-border/40">
                 <span className="text-soc-muted">Query Name:</span>
                 <span className="text-cyan-400 font-bold break-all">{packet.dns_query}</span>
@@ -171,7 +173,7 @@ export const PacketDrawer: React.FC<PacketDrawerProps> = ({ packet, onClose, mas
         {/* Section: Capture Metadata */}
         <div className="space-y-2">
           <h4 className="text-[11px] uppercase tracking-wider text-soc-dim font-bold">Metadata & Environment</h4>
-          <div className="bg-soc-bg rounded p-3 border border-soc-border text-soc-dim space-y-1">
+          <div className="inset-well p-3 text-soc-dim space-y-1">
             <p>Session ID: <span className="text-soc-text">{packet.session_id}</span></p>
             <p>Interface: <span className="text-soc-text">{packet.interface}</span></p>
             <p>Timestamp: <span className="text-soc-text">{new Date(packet.timestamp).toISOString()}</span></p>

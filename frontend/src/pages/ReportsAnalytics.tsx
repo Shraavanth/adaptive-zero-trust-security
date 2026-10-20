@@ -47,7 +47,7 @@ export const ReportsAnalytics: React.FC = () => {
 
   return (
     <div className="space-y-4 font-mono text-xs">
-      <div className="bg-soc-card border border-soc-border rounded-lg p-4 flex items-center justify-between">
+      <div className="page-head">
         <div>
           <h2 className="text-base font-bold text-soc-text flex items-center gap-2">
             <BarChart3 className="w-4 h-4 text-blue-400" />
@@ -60,13 +60,13 @@ export const ReportsAnalytics: React.FC = () => {
         <div className="flex items-center gap-2">
           <button
             onClick={fetchReports}
-            className="flex items-center gap-1.5 px-3 py-1.5 rounded bg-soc-bg hover:bg-soc-cardHover border border-soc-border text-soc-muted hover:text-soc-text transition-colors"
+            className="btn-ghost"
           >
             <RefreshCw className="w-3.5 h-3.5" /> Refresh Data
           </button>
           <button
             onClick={handleExportReport}
-            className="flex items-center gap-1.5 px-3 py-1.5 rounded bg-blue-600 hover:bg-blue-500 text-white font-bold transition-colors"
+            className="flex items-center gap-1.5 px-3 py-1.5 rounded btn-signal font-bold transition-colors"
           >
             <Download className="w-3.5 h-3.5" /> Export SOC Report
           </button>
@@ -76,7 +76,7 @@ export const ReportsAnalytics: React.FC = () => {
       {/* Analytics Charts */}
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
         {/* Protocol Distribution */}
-        <div className="bg-soc-card border border-soc-border rounded-lg p-5 space-y-3">
+        <div className="panel p-5 space-y-3">
           <h3 className="font-bold text-soc-text text-xs uppercase tracking-wider">Protocol Volume Breakdown</h3>
           <div className="h-52">
             {protoChartData.length > 0 ? (
@@ -99,7 +99,7 @@ export const ReportsAnalytics: React.FC = () => {
         </div>
 
         {/* Severity Breakdown */}
-        <div className="bg-soc-card border border-soc-border rounded-lg p-5 space-y-3">
+        <div className="panel p-5 space-y-3">
           <h3 className="font-bold text-soc-text text-xs uppercase tracking-wider">Security Threat Incidents by Severity</h3>
           <div className="h-52">
             {sevChartData.length > 0 ? (
@@ -119,13 +119,13 @@ export const ReportsAnalytics: React.FC = () => {
       </div>
 
       {/* Top Threat Actors Table */}
-      <div className="bg-soc-card border border-soc-border rounded-lg overflow-hidden">
+      <div className="panel overflow-hidden">
         <div className="p-3 border-b border-soc-border bg-soc-bg/60">
           <h3 className="font-bold text-soc-text text-xs uppercase tracking-wider">Top Incident Repeat Actors</h3>
         </div>
         <div className="overflow-x-auto">
           <table className="w-full text-left">
-            <thead className="bg-soc-bg/90 border-b border-soc-border text-soc-dim text-[11px] uppercase tracking-wider select-none">
+            <thead className="thead-soc">
               <tr>
                 <th className="py-2.5 px-3">Entity Identifier</th>
                 <th className="py-2.5 px-3">Qualifying Incidents</th>

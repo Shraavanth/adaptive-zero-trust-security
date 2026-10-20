@@ -30,7 +30,7 @@ export const NetworkInterfaces: React.FC<NetworkInterfacesProps> = ({ selectedIn
 
   return (
     <div className="space-y-4 font-mono text-xs">
-      <div className="bg-soc-card border border-soc-border rounded-lg p-4 flex items-center justify-between">
+      <div className="page-head">
         <div>
           <h2 className="text-base font-bold text-soc-text flex items-center gap-2">
             <Wifi className="w-4 h-4 text-blue-400" />
@@ -42,7 +42,7 @@ export const NetworkInterfaces: React.FC<NetworkInterfacesProps> = ({ selectedIn
         </div>
         <button
           onClick={fetchInterfaces}
-          className="flex items-center gap-1.5 px-3 py-1.5 rounded bg-soc-bg hover:bg-soc-cardHover border border-soc-border text-soc-muted hover:text-soc-text transition-colors"
+          className="btn-ghost"
         >
           <RefreshCw className="w-3.5 h-3.5" /> Re-scan Adapters
         </button>
@@ -54,7 +54,7 @@ export const NetworkInterfaces: React.FC<NetworkInterfacesProps> = ({ selectedIn
           return (
             <div
               key={iface.id}
-              className={`bg-soc-card border rounded-lg p-4 space-y-3 transition-all ${
+              className={`panel p-4 space-y-3 transition-colors ${
                 isSelected
                   ? 'border-blue-500 shadow-lg shadow-blue-950/40 bg-blue-950/20'
                   : 'border-soc-border hover:border-slate-600'

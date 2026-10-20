@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import {
   Download,
   Pause,
@@ -15,6 +15,7 @@ import { api } from '../services/api';
 import { Packet } from '../types';
 import { PacketDrawer } from '../components/PacketDrawer';
 import { ModeBadge } from '../components/Badge';
+import { PacketStream } from '../components/viz/PacketStream';
 
 interface LiveMonitorProps {
   packets: Packet[];
@@ -32,6 +33,8 @@ export const LiveMonitor: React.FC<LiveMonitorProps> = ({ packets: streamPackets
   const [isSavingMask, setIsSavingMask] = useState(false);
   const [maskSaveError, setMaskSaveError] = useState('');
   const [selectedPacket, setSelectedPacket] = useState<Packet | null>(null);
+  // Packets present at first load don't flash; anything that arrives after does.
+  const initialIdsRef = useRef<Set<number>>(new Set());
 
   useEffect(() => {
     api.getSettings()
@@ -44,6 +47,7 @@ export const LiveMonitor: React.FC<LiveMonitorProps> = ({ packets: streamPackets
     const fetchRecent = async () => {
       try {
         const initial = await api.getPackets({ limit: 80 });
+        initialIdsRef.current = new Set(initial.map((p: Packet) => p.id));
         setDisplayedPackets(initial);
       } catch (err) {
         console.error('Failed to load initial packets', err);
@@ -104,9 +108,9 @@ export const LiveMonitor: React.FC<LiveMonitorProps> = ({ packets: streamPackets
   };
 
   return (
-    <div className="space-y-4">
+    <div className="space-y-6">
       {/* Top Banner & Quick Controls */}
-      <div className="bg-soc-card border border-soc-border rounded-lg p-4 flex flex-wrap items-center justify-between gap-3">
+      <div className="page-head">
         <div>
           <h2 className="text-base font-bold text-soc-text font-mono">Live Packet Inspection Engine</h2>
           <p className="text-xs text-soc-dim">
@@ -114,43 +118,39 @@ export const LiveMonitor: React.FC<LiveMonitorProps> = ({ packets: streamPackets
           </p>
         </div>
 
-        <div className="flex items-center gap-2">
+        <div className="flex flex-wrap items-center gap-2">
           {/* Pause / Resume Button */}
           <button
             onClick={() => setIsPaused(!isPaused)}
-            className={`flex items-center gap-1.5 px-3 py-1.5 rounded text-xs font-mono border transition-colors ${
-              isPaused
-                ? 'bg-amber-950/80 border-amber-700 text-amber-300 hover:bg-amber-900'
-                : 'bg-soc-bg hover:bg-soc-cardHover border-soc-border text-soc-muted hover:text-soc-text'
-            }`}
+            className={`btn-ghost ${isPaused ? '!bg-amber-400/10 !text-amber-200 !shadow-[inset_0_0_0_1px_rgb(235_183_95/0.35)]' : ''}`}
           >
             {isPaused ? <Play className="w-3.5 h-3.5" /> : <Pause className="w-3.5 h-3.5" />}
-            {isPaused ? 'RESUME STREAM' : 'PAUSE DISPLAY'}
+            {isPaused ? 'Resume stream' : 'Pause display'}
           </button>
 
           {/* Privacy Mask Toggle */}
           <button
             onClick={handleToggleMask}
             disabled={isSavingMask}
-            className="flex items-center gap-1.5 px-3 py-1.5 rounded bg-soc-bg hover:bg-soc-cardHover border border-soc-border text-xs font-mono text-soc-muted hover:text-soc-text transition-colors"
+            className="btn-ghost"
             title="Mask IP/MAC addresses in this view. Exported packet data is not masked."
           >
             {maskData ? <EyeOff className="w-3.5 h-3.5 text-amber-400" /> : <Eye className="w-3.5 h-3.5 text-emerald-400" />}
-            {maskData ? 'MASKED' : 'REVEALED'}
+            {maskData ? 'Addresses masked' : 'Addresses visible'}
           </button>
           {maskSaveError && <span role="alert" className="text-rose-400">{maskSaveError}</span>}
 
           {/* Export Dropdown */}
-          <div className="flex items-center rounded border border-soc-border bg-soc-bg text-xs font-mono">
+          <div className="flex h-[34px] items-center overflow-hidden rounded-full bg-white/[0.03] text-[12px] font-medium shadow-[inset_0_0_0_1px_rgb(255_255_255/0.07)]">
             <button
               onClick={() => handleExport('csv')}
-              className="px-2.5 py-1.5 hover:bg-soc-cardHover text-soc-muted hover:text-soc-text flex items-center gap-1 border-r border-soc-border"
+              className="flex h-full items-center gap-1.5 border-r border-white/[0.07] pl-3.5 pr-3 text-soc-muted transition-colors hover:bg-white/[0.05] hover:text-soc-text"
             >
               <Download className="w-3.5 h-3.5" /> CSV
             </button>
             <button
               onClick={() => handleExport('json')}
-              className="px-2.5 py-1.5 hover:bg-soc-cardHover text-soc-muted hover:text-soc-text"
+              className="flex h-full items-center pl-3 pr-3.5 text-soc-muted transition-colors hover:bg-white/[0.05] hover:text-soc-text"
             >
               JSON
             </button>
@@ -158,8 +158,20 @@ export const LiveMonitor: React.FC<LiveMonitorProps> = ({ packets: streamPackets
         </div>
       </div>
 
+      {/* Signature: packets crossing protocol lanes to the inspection line */}
+      <section className="panel overflow-hidden p-0">
+        <div className="flex items-center justify-between px-6 pt-5">
+          <p className="label-caps flex items-center gap-2">
+            <span className={`h-1.5 w-1.5 rounded-full ${isCapturing && !isPaused ? 'live-ping bg-signal-400 text-signal-400' : 'bg-ice-600'}`} />
+            Packet stream
+          </p>
+          <p className="font-mono text-[10.5px] text-soc-dim">{isPaused ? 'DISPLAY PAUSED' : isCapturing ? 'LIVE · TRAIL LENGTH = PACKET SIZE' : 'IDLE'}</p>
+        </div>
+        <PacketStream packets={isPaused ? [] : streamPackets} live={isCapturing && !isPaused} className="h-[260px] w-full" />
+      </section>
+
       {/* Filter & Search Bar */}
-      <div className="bg-soc-card border border-soc-border rounded-lg p-3 flex flex-wrap items-center gap-3 text-xs font-mono">
+      <div className="panel p-3 flex flex-wrap items-center gap-3 text-xs font-mono">
         <div className="flex-1 min-w-[200px] relative">
           <Search className="w-3.5 h-3.5 absolute left-3 top-2.5 text-soc-dim" />
           <input
@@ -167,7 +179,7 @@ export const LiveMonitor: React.FC<LiveMonitorProps> = ({ packets: streamPackets
             placeholder="Search Source IP, Dest IP, Domain or MAC..."
             value={search}
             onChange={(e) => setSearch(e.target.value)}
-            className="w-full bg-soc-bg border border-soc-border rounded pl-9 pr-3 py-1.5 text-soc-text placeholder:text-soc-dim focus:outline-none focus:border-blue-500"
+            className="w-full inset-well pl-9 pr-3 py-1.5 text-soc-text placeholder:text-soc-dim focus:outline-none focus:border-blue-500"
           />
         </div>
 
@@ -176,7 +188,7 @@ export const LiveMonitor: React.FC<LiveMonitorProps> = ({ packets: streamPackets
           <select
             value={protocolFilter}
             onChange={(e) => setProtocolFilter(e.target.value)}
-            className="bg-soc-bg border border-soc-border rounded px-2.5 py-1.5 text-soc-text focus:outline-none focus:border-blue-500"
+            className="inset-well px-2.5 py-1.5 text-soc-text focus:outline-none focus:border-blue-500"
           >
             <option value="ALL">ALL</option>
             <option value="TCP">TCP</option>
@@ -192,7 +204,7 @@ export const LiveMonitor: React.FC<LiveMonitorProps> = ({ packets: streamPackets
           <select
             value={statusFilter}
             onChange={(e) => setStatusFilter(e.target.value)}
-            className="bg-soc-bg border border-soc-border rounded px-2.5 py-1.5 text-soc-text focus:outline-none focus:border-blue-500"
+            className="inset-well px-2.5 py-1.5 text-soc-text focus:outline-none focus:border-blue-500"
           >
             <option value="ALL">ALL</option>
             <option value="CLEAN">CLEAN</option>
@@ -203,10 +215,10 @@ export const LiveMonitor: React.FC<LiveMonitorProps> = ({ packets: streamPackets
       </div>
 
       {/* Primary Packets Table */}
-      <div className="bg-soc-card border border-soc-border rounded-lg overflow-hidden">
+      <div className="panel overflow-hidden">
         <div className="overflow-x-auto">
           <table className="w-full text-left text-xs font-mono">
-            <thead className="bg-soc-bg/90 border-b border-soc-border text-soc-dim text-[11px] uppercase tracking-wider select-none">
+            <thead className="thead-soc">
               <tr>
                 <th className="py-2.5 px-3">Timestamp</th>
                 <th className="py-2.5 px-3">Source IP</th>
@@ -224,11 +236,14 @@ export const LiveMonitor: React.FC<LiveMonitorProps> = ({ packets: streamPackets
                 filteredPackets.map((pkt) => {
                   const isMalicious = pkt.detection_status === 'MALICIOUS';
                   const isSuspicious = pkt.detection_status === 'SUSPICIOUS';
+                  const isFresh = !initialIdsRef.current.has(pkt.id);
                   return (
                     <tr
                       key={pkt.id}
                       onClick={() => setSelectedPacket(pkt)}
                       className={`cursor-pointer transition-colors ${
+                        isFresh ? (isMalicious || isSuspicious ? 'row-fresh-threat ' : 'row-fresh ') : ''
+                      }${
                         isMalicious
                           ? 'bg-rose-950/20 hover:bg-rose-950/40 text-rose-300'
                           : isSuspicious

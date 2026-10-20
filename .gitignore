@@ -12,6 +12,8 @@ downloads/
 eggs/
 .eggs/
 lib/
+# The Python `lib/` rule above must not swallow the frontend's source folder
+!frontend/src/lib/
 lib64/
 parts/
 sdist/

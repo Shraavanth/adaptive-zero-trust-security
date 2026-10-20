@@ -43,7 +43,7 @@ export const Settings: React.FC = () => {
 
   return (
     <div className="space-y-4 font-mono text-xs">
-      <div className="bg-soc-card border border-soc-border rounded-lg p-4 flex items-center justify-between">
+      <div className="page-head">
         <div>
           <h2 className="text-base font-bold text-soc-text flex items-center gap-2">
             <SettingsIcon className="w-4 h-4 text-blue-400" />
@@ -55,7 +55,7 @@ export const Settings: React.FC = () => {
         </div>
         <button
           onClick={fetchConfigs}
-          className="flex items-center gap-1.5 px-3 py-1.5 rounded bg-soc-bg hover:bg-soc-cardHover border border-soc-border text-soc-muted hover:text-soc-text transition-colors"
+          className="btn-ghost"
         >
           <RefreshCw className="w-3.5 h-3.5" /> Reload Config
         </button>
@@ -64,7 +64,7 @@ export const Settings: React.FC = () => {
       <form onSubmit={handleSave} className="space-y-4">
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           {/* Trust Scoring Penalties */}
-          <div className="bg-soc-card border border-soc-border rounded-lg p-4 space-y-3">
+          <div className="panel p-4 space-y-3">
             <h3 className="font-bold text-soc-text text-sm uppercase tracking-wider border-b border-soc-border pb-2">
               Dynamic Trust Scoring Penalties
             </h3>
@@ -74,7 +74,7 @@ export const Settings: React.FC = () => {
                 type="number"
                 value={configs.trust_initial_score || '100'}
                 onChange={(e) => handleChange('trust_initial_score', e.target.value)}
-                className="w-full bg-soc-bg border border-soc-border rounded px-3 py-1.5 text-soc-text"
+                className="w-full inset-well px-3 py-1.5 text-soc-text"
               />
             </div>
             <div>
@@ -85,7 +85,7 @@ export const Settings: React.FC = () => {
                 max="100"
                 value={configs.penalty_informational || '2'}
                 onChange={(e) => handleChange('penalty_informational', e.target.value)}
-                className="w-full bg-soc-bg border border-soc-border rounded px-3 py-1.5 text-soc-text"
+                className="w-full inset-well px-3 py-1.5 text-soc-text"
               />
             </div>
             <div>
@@ -94,7 +94,7 @@ export const Settings: React.FC = () => {
                 type="number"
                 value={configs.penalty_phishing || '15'}
                 onChange={(e) => handleChange('penalty_phishing', e.target.value)}
-                className="w-full bg-soc-bg border border-soc-border rounded px-3 py-1.5 text-soc-text"
+                className="w-full inset-well px-3 py-1.5 text-soc-text"
               />
             </div>
             <div>
@@ -103,7 +103,7 @@ export const Settings: React.FC = () => {
                 type="number"
                 value={configs.penalty_dns_spoofing || '25'}
                 onChange={(e) => handleChange('penalty_dns_spoofing', e.target.value)}
-                className="w-full bg-soc-bg border border-soc-border rounded px-3 py-1.5 text-soc-text"
+                className="w-full inset-well px-3 py-1.5 text-soc-text"
               />
             </div>
             <div>
@@ -112,13 +112,13 @@ export const Settings: React.FC = () => {
                 type="number"
                 value={configs.penalty_arp_spoofing || '30'}
                 onChange={(e) => handleChange('penalty_arp_spoofing', e.target.value)}
-                className="w-full bg-soc-bg border border-soc-border rounded px-3 py-1.5 text-soc-text"
+                className="w-full inset-well px-3 py-1.5 text-soc-text"
               />
             </div>
           </div>
 
           {/* Behavior Risk & Self Healing */}
-          <div className="bg-soc-card border border-soc-border rounded-lg p-4 space-y-3">
+          <div className="panel p-4 space-y-3">
             <h3 className="font-bold text-soc-text text-sm uppercase tracking-wider border-b border-soc-border pb-2">
               Risk Bounds & Self-Healing Prerequisites
             </h3>
@@ -130,7 +130,7 @@ export const Settings: React.FC = () => {
                 max="100"
                 value={configs.behavior_risk_isolate_threshold || '70'}
                 onChange={(e) => handleChange('behavior_risk_isolate_threshold', e.target.value)}
-                className="w-full bg-soc-bg border border-soc-border rounded px-3 py-1.5 text-soc-text"
+                className="w-full inset-well px-3 py-1.5 text-soc-text"
               />
             </div>
             <div>
@@ -141,7 +141,7 @@ export const Settings: React.FC = () => {
                 max="100"
                 value={configs.recovery_max_risk_score || '69'}
                 onChange={(e) => handleChange('recovery_max_risk_score', e.target.value)}
-                className="w-full bg-soc-bg border border-soc-border rounded px-3 py-1.5 text-soc-text"
+                className="w-full inset-well px-3 py-1.5 text-soc-text"
               />
             </div>
             <div>
@@ -150,7 +150,7 @@ export const Settings: React.FC = () => {
                 type="number"
                 value={configs.recovery_clean_window_seconds || '300'}
                 onChange={(e) => handleChange('recovery_clean_window_seconds', e.target.value)}
-                className="w-full bg-soc-bg border border-soc-border rounded px-3 py-1.5 text-soc-text"
+                className="w-full inset-well px-3 py-1.5 text-soc-text"
               />
             </div>
             <div>
@@ -159,7 +159,7 @@ export const Settings: React.FC = () => {
                 type="number"
                 value={configs.recovery_min_trust_score || '80'}
                 onChange={(e) => handleChange('recovery_min_trust_score', e.target.value)}
-                className="w-full bg-soc-bg border border-soc-border rounded px-3 py-1.5 text-soc-text"
+                className="w-full inset-well px-3 py-1.5 text-soc-text"
               />
             </div>
             <div>
@@ -167,7 +167,7 @@ export const Settings: React.FC = () => {
               <select
                 value={configs.authorized_response_mode || 'SIMULATED'}
                 onChange={(e) => handleChange('authorized_response_mode', e.target.value)}
-                className="w-full bg-soc-bg border border-soc-border rounded px-3 py-1.5 text-soc-text"
+                className="w-full inset-well px-3 py-1.5 text-soc-text"
               >
                 <option value="SIMULATED">SIMULATED (Production Safe)</option>
                 <option value="AUTHORIZED_LAB" disabled>AUTHORIZED_LAB (Not implemented)</option>
@@ -178,7 +178,7 @@ export const Settings: React.FC = () => {
               <select
                 value={configs.auto_healing_enabled || 'true'}
                 onChange={(e) => handleChange('auto_healing_enabled', e.target.value)}
-                className="w-full bg-soc-bg border border-soc-border rounded px-3 py-1.5 text-soc-text"
+                className="w-full inset-well px-3 py-1.5 text-soc-text"
               >
                 <option value="true">Enabled</option>
                 <option value="false">Disabled</option>
@@ -189,7 +189,7 @@ export const Settings: React.FC = () => {
               <select
                 value={configs.privacy_masking_enabled || 'true'}
                 onChange={(e) => handleChange('privacy_masking_enabled', e.target.value)}
-                className="w-full bg-soc-bg border border-soc-border rounded px-3 py-1.5 text-soc-text"
+                className="w-full inset-well px-3 py-1.5 text-soc-text"
               >
                 <option value="true">Enabled</option>
                 <option value="false">Disabled</option>
@@ -209,7 +209,7 @@ export const Settings: React.FC = () => {
           <button
             type="submit"
             disabled={isSaving}
-            className="px-5 py-2 rounded bg-blue-600 hover:bg-blue-500 text-white font-bold flex items-center gap-2 transition-colors disabled:opacity-50"
+            className="px-5 py-2 rounded btn-signal font-bold flex items-center gap-2 transition-colors disabled:opacity-50"
           >
             <Save className="w-4 h-4" />
             {isSaving ? 'Saving...' : 'Save Configuration'}
