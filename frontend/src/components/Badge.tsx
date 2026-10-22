@@ -1,33 +1,48 @@
 import React from 'react';
 import { TrustState, ThreatSeverity, OperatingMode } from '../types';
 
+// Flags, not pills: tight radius, mono caps, a tinted hairline instead of a border.
+const flag =
+  'inline-flex items-center gap-1.5 h-[22px] px-2 rounded-[6px] font-mono text-[10px] font-medium tracking-[0.08em] whitespace-nowrap';
+
+const TONES = {
+  signal: 'bg-signal-400/10 text-signal-300 shadow-[inset_0_0_0_1px_rgb(194_234_110/0.22)]',
+  amber: 'bg-amber-400/10 text-amber-300 shadow-[inset_0_0_0_1px_rgb(235_183_95/0.25)]',
+  ember: 'bg-orange-400/10 text-orange-300 shadow-[inset_0_0_0_1px_rgb(232_147_93/0.25)]',
+  coral: 'bg-rose-400/[0.12] text-rose-200 shadow-[inset_0_0_0_1px_rgb(242_122_110/0.35)]',
+  ice: 'bg-white/[0.04] text-ice-300 shadow-[inset_0_0_0_1px_rgb(255_255_255/0.08)]',
+} as const;
+
+const DOT = {
+  signal: 'bg-signal-400',
+  amber: 'bg-amber-400',
+  ember: 'bg-orange-400',
+  coral: 'bg-rose-400',
+  ice: 'bg-ice-400',
+} as const;
+
+const trustTone = (s: string): keyof typeof TONES =>
+  s === 'TRUSTED' ? 'signal' : s === 'MONITOR' ? 'amber' : s === 'RESTRICT' ? 'ember' : s === 'ISOLATE' ? 'coral' : 'ice';
+
 export const TrustBadge: React.FC<{ state: TrustState | string; score?: number }> = ({ state, score }) => {
   const s = String(state).toUpperCase();
-  let bg = 'bg-slate-800 text-slate-300 border-slate-700';
-  if (s === 'TRUSTED') bg = 'bg-emerald-950/80 text-emerald-400 border-emerald-800/60';
-  else if (s === 'MONITOR') bg = 'bg-amber-950/80 text-amber-400 border-amber-800/60';
-  else if (s === 'RESTRICT') bg = 'bg-orange-950/80 text-orange-400 border-orange-800/60';
-  else if (s === 'ISOLATE') bg = 'bg-rose-950/80 text-rose-400 border-rose-800/60';
-
+  const tone = trustTone(s);
   return (
-    <span className={`inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded text-xs font-mono font-medium border ${bg}`}>
-      <span className={`w-1.5 h-1.5 rounded-full ${s === 'TRUSTED' ? 'bg-emerald-400' : s === 'MONITOR' ? 'bg-amber-400' : s === 'RESTRICT' ? 'bg-orange-400' : 'bg-rose-400'}`} />
-      {s} {score !== undefined && `(${score})`}
+    <span className={`${flag} ${TONES[tone]}`}>
+      <span aria-hidden="true" className={`h-1.5 w-1.5 rounded-full ${DOT[tone]} ${s === 'ISOLATE' ? 'live-ping text-rose-400' : ''}`} />
+      {s}
+      {score !== undefined && <span className="opacity-60">{score}</span>}
     </span>
   );
 };
 
 export const SeverityBadge: React.FC<{ severity: ThreatSeverity | string }> = ({ severity }) => {
   const sev = String(severity).toUpperCase();
-  let bg = 'bg-slate-800 text-slate-300 border-slate-700';
-  if (sev === 'CRITICAL') bg = 'bg-rose-950/80 text-rose-300 border-rose-800 animate-pulse';
-  else if (sev === 'HIGH') bg = 'bg-red-950/80 text-red-400 border-red-800/70';
-  else if (sev === 'MEDIUM') bg = 'bg-amber-950/80 text-amber-400 border-amber-800/70';
-  else if (sev === 'LOW') bg = 'bg-blue-950/80 text-blue-400 border-blue-800/70';
-  else if (sev === 'INFO') bg = 'bg-slate-800/90 text-slate-300 border-slate-700';
-
+  const tone: keyof typeof TONES =
+    sev === 'CRITICAL' || sev === 'HIGH' ? 'coral' : sev === 'MEDIUM' ? 'amber' : 'ice';
   return (
-    <span className={`inline-flex items-center px-2 py-0.5 rounded text-xs font-mono font-medium border ${bg}`}>
+    <span className={`${flag} ${TONES[tone]}`}>
+      {sev === 'CRITICAL' && <span aria-hidden="true" className="live-ping h-1.5 w-1.5 rounded-full bg-rose-400 text-rose-400" />}
       {sev}
     </span>
   );
@@ -35,15 +50,6 @@ export const SeverityBadge: React.FC<{ severity: ThreatSeverity | string }> = ({
 
 export const ModeBadge: React.FC<{ mode: OperatingMode | string }> = ({ mode }) => {
   const m = String(mode).toUpperCase();
-  let color = 'text-blue-400 border-blue-800 bg-blue-950/50';
-  if (m === 'LIVE_CAPTURE') color = 'text-emerald-400 border-emerald-800 bg-emerald-950/50';
-  else if (m === 'CONTROLLED_LAB') color = 'text-purple-400 border-purple-800 bg-purple-950/50';
-  else if (m === 'OFFLINE_REPLAY') color = 'text-amber-400 border-amber-800 bg-amber-950/50';
-  else if (m === 'SIMULATED_TEST') color = 'text-cyan-400 border-cyan-800 bg-cyan-950/50';
-
-  return (
-    <span className={`inline-flex items-center px-2 py-0.5 rounded text-[11px] font-mono border ${color}`}>
-      {m}
-    </span>
-  );
+  const tone: keyof typeof TONES = m === 'LIVE_CAPTURE' ? 'signal' : m === 'OFFLINE_REPLAY' ? 'amber' : 'ice';
+  return <span className={`${flag} ${TONES[tone]}`}>{m.replace('_', ' ')}</span>;
 };

@@ -77,7 +77,7 @@ export const InvestigationCenter: React.FC = () => {
 
   return (
     <div className="space-y-4">
-      <div className="bg-soc-card border border-soc-border rounded-lg p-4 flex items-center justify-between">
+      <div className="page-head">
         <div>
           <h2 className="text-base font-bold text-soc-text font-mono flex items-center gap-2">
             <Search className="w-4 h-4 text-blue-400" />
@@ -89,7 +89,7 @@ export const InvestigationCenter: React.FC = () => {
         </div>
         <button
           onClick={fetchCases}
-          className="flex items-center gap-1.5 px-3 py-1.5 rounded bg-soc-bg hover:bg-soc-cardHover border border-soc-border text-xs font-mono text-soc-muted hover:text-soc-text transition-colors"
+          className="btn-ghost"
         >
           <RefreshCw className="w-3.5 h-3.5" /> Refresh Cases
         </button>
@@ -97,7 +97,7 @@ export const InvestigationCenter: React.FC = () => {
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
         {/* Cases List */}
-        <div className="bg-soc-card border border-soc-border rounded-lg p-3 space-y-2 font-mono text-xs">
+        <div className="panel p-3 space-y-2 font-mono text-xs">
           <h3 className="font-semibold text-soc-dim text-[11px] uppercase tracking-wider px-2">Active Cases ({cases.length})</h3>
           <div className="space-y-1.5 max-h-[600px] overflow-y-auto">
             {cases.length > 0 ? (
@@ -108,7 +108,7 @@ export const InvestigationCenter: React.FC = () => {
                     setSelectedCase(c);
                     setNoteText(c.notes);
                   }}
-                  className={`p-3 rounded border cursor-pointer transition-all ${
+                  className={`p-3 rounded border cursor-pointer transition-colors ${
                     selectedCase?.id === c.id
                       ? 'bg-blue-950/40 border-blue-600/70'
                       : 'bg-soc-bg border-soc-border hover:border-slate-600'
@@ -140,7 +140,7 @@ export const InvestigationCenter: React.FC = () => {
         </div>
 
         {/* Case Work Area */}
-        <div className="lg:col-span-2 bg-soc-card border border-soc-border rounded-lg p-5 font-mono text-xs space-y-4">
+        <div className="lg:col-span-2 panel p-5 font-mono text-xs space-y-4">
           {selectedCase ? (
             <div className="space-y-4">
               <div className="flex items-center justify-between border-b border-soc-border pb-3">
@@ -242,7 +242,7 @@ export const InvestigationCenter: React.FC = () => {
                   value={noteText}
                   onChange={(e) => setNoteText(e.target.value)}
                   rows={8}
-                  className="w-full bg-soc-bg border border-soc-border rounded p-3 text-soc-text font-mono focus:outline-none focus:border-blue-500"
+                  className="w-full inset-well p-3 text-soc-text font-mono focus:outline-none focus:border-blue-500"
                   placeholder="Record forensic analysis notes, timeline artifacts, and mitigations..."
                 />
               </div>
@@ -250,7 +250,7 @@ export const InvestigationCenter: React.FC = () => {
               <div className="flex justify-end">
                 <button
                   onClick={handleSaveNotes}
-                  className="px-4 py-1.5 rounded bg-blue-600 hover:bg-blue-500 text-white font-medium text-xs font-mono"
+                  className="px-4 py-1.5 rounded btn-signal font-medium text-xs font-mono"
                 >
                   Save Notes
                 </button>

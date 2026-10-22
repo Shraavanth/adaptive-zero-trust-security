@@ -31,7 +31,7 @@ export const HoneypotMonitoring: React.FC = () => {
 
   return (
     <div className="space-y-4 font-mono text-xs">
-      <div className="bg-soc-card border border-soc-border rounded-lg p-4 flex items-center justify-between">
+      <div className="page-head">
         <div>
           <h2 className="text-base font-bold text-soc-text flex items-center gap-2">
             <Radar className="w-4 h-4 text-cyan-400" />
@@ -43,7 +43,7 @@ export const HoneypotMonitoring: React.FC = () => {
         </div>
         <button
           onClick={fetchData}
-          className="flex items-center gap-1.5 px-3 py-1.5 rounded bg-soc-bg hover:bg-soc-cardHover border border-soc-border text-soc-muted hover:text-soc-text transition-colors"
+          className="btn-ghost"
         >
           <RefreshCw className="w-3.5 h-3.5" /> Refresh Honeypots
         </button>
@@ -52,7 +52,7 @@ export const HoneypotMonitoring: React.FC = () => {
       {/* Deployed Honeypot Cards */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-3">
         {honeypots.map((hp) => (
-          <div key={hp.id} className="bg-soc-card border border-soc-border rounded-lg p-3 space-y-2">
+          <div key={hp.id} className="panel p-3 space-y-2">
             <div className="flex items-center justify-between">
               <span className="text-[10px] text-soc-dim font-bold">{hp.id}</span>
               <span className={`px-2 py-0.5 rounded text-[10px] font-bold ${
@@ -75,7 +75,7 @@ export const HoneypotMonitoring: React.FC = () => {
       </div>
 
       {/* Honeypot Interaction Events */}
-      <div className="bg-soc-card border border-soc-border rounded-lg overflow-hidden">
+      <div className="panel overflow-hidden">
         <div className="p-3 border-b border-soc-border bg-soc-bg/60 flex items-center justify-between">
           <h3 className="font-bold text-soc-text text-xs uppercase tracking-wider">
             Adversary Decoy Interaction Log ({events.length})
@@ -83,7 +83,7 @@ export const HoneypotMonitoring: React.FC = () => {
         </div>
         <div className="overflow-x-auto">
           <table className="w-full text-left">
-            <thead className="bg-soc-bg/90 border-b border-soc-border text-soc-dim text-[11px] uppercase tracking-wider select-none">
+            <thead className="thead-soc">
               <tr>
                 <th className="py-2.5 px-3">Event Ref</th>
                 <th className="py-2.5 px-3">Honeypot Trap</th>

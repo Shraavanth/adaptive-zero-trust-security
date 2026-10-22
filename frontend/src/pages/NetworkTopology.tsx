@@ -1,7 +1,8 @@
 import React, { useState, useEffect } from 'react';
-import { GitFork, RefreshCw, Shield, Server, Laptop, Radar, Activity } from 'lucide-react';
+import { GitFork, RefreshCw } from 'lucide-react';
 import { api } from '../services/api';
 import { TrustBadge } from '../components/Badge';
+import { TopologyGraph } from '../components/viz/TopologyGraph';
 
 export const NetworkTopology: React.FC = () => {
   const [topology, setTopology] = useState<{ nodes: any[]; links: any[] }>({ nodes: [], links: [] });
@@ -22,15 +23,9 @@ export const NetworkTopology: React.FC = () => {
     return () => clearInterval(interval);
   }, []);
 
-  const getNodeIcon = (type: string) => {
-    if (type === 'GATEWAY') return <Server className="w-5 h-5 text-blue-400" />;
-    if (type === 'HONEYPOT') return <Radar className="w-5 h-5 text-cyan-400" />;
-    return <Laptop className="w-5 h-5 text-emerald-400" />;
-  };
-
   return (
     <div className="space-y-4 font-mono text-xs">
-      <div className="bg-soc-card border border-soc-border rounded-lg p-4 flex items-center justify-between">
+      <div className="page-head">
         <div>
           <h2 className="text-base font-bold text-soc-text flex items-center gap-2">
             <GitFork className="w-4 h-4 text-blue-400" />
@@ -42,7 +37,7 @@ export const NetworkTopology: React.FC = () => {
         </div>
         <button
           onClick={fetchTopology}
-          className="flex items-center gap-1.5 px-3 py-1.5 rounded bg-soc-bg hover:bg-soc-cardHover border border-soc-border text-soc-muted hover:text-soc-text transition-colors"
+          className="btn-ghost"
         >
           <RefreshCw className="w-3.5 h-3.5" /> Refresh Topology
         </button>
@@ -50,48 +45,24 @@ export const NetworkTopology: React.FC = () => {
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
         {/* Visual Node Grid */}
-        <div className="lg:col-span-2 bg-soc-card border border-soc-border rounded-lg p-5 space-y-4">
+        <div className="lg:col-span-2 panel p-5 space-y-4">
           <div className="flex items-center justify-between text-[11px] text-soc-dim border-b border-soc-border pb-2">
             <span>DISCOVERED & CONFIGURED NETWORK ENTITIES ({topology.nodes.length})</span>
             <div className="flex items-center gap-3">
-              <span className="flex items-center gap-1"><span className="w-2 h-2 rounded-full bg-blue-400" /> Gateway</span>
-              <span className="flex items-center gap-1"><span className="w-2 h-2 rounded-full bg-emerald-400" /> Endpoint</span>
-              <span className="flex items-center gap-1"><span className="w-2 h-2 rounded-full bg-cyan-400" /> Decoy</span>
+              <span className="flex items-center gap-1.5"><span className="w-2 h-2 rotate-45 bg-signal-400" /> Gateway</span>
+              <span className="flex items-center gap-1.5"><span className="w-2 h-2 rounded-full border border-signal-400" /> Host</span>
+              <span className="flex items-center gap-1.5"><span className="w-2 h-2 rounded-[2px] border border-dashed border-ice-400" /> Decoy</span>
+              <span className="flex items-center gap-1.5"><span className="h-px w-4 bg-rose-400" /> Attack flow</span>
             </div>
           </div>
 
-          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-3">
-            {topology.nodes.map((n) => {
-              const isSelected = selectedNode?.id === n.id;
-              return (
-                <div
-                  key={n.id}
-                  onClick={() => setSelectedNode(n)}
-                  className={`p-3 rounded-lg border cursor-pointer transition-all ${
-                    isSelected
-                      ? 'bg-blue-950/40 border-blue-500 shadow-md'
-                      : n.status === 'ISOLATE'
-                      ? 'bg-rose-950/20 border-rose-800/80 hover:border-rose-600'
-                      : 'bg-soc-bg border-soc-border hover:border-slate-600'
-                  }`}
-                >
-                  <div className="flex items-center justify-between">
-                    <div className="p-2 rounded bg-soc-card border border-soc-border">
-                      {getNodeIcon(n.type)}
-                    </div>
-                    <span className="text-[10px] text-soc-dim uppercase font-bold">{n.category}</span>
-                  </div>
-                  <h4 className="font-bold text-soc-text text-sm mt-2 truncate">{n.label}</h4>
-                  <p className="text-[11px] text-soc-dim truncate mt-0.5">{n.ip}</p>
-                  <div className="mt-3 flex items-center justify-between pt-2 border-t border-soc-border/50">
-                    <TrustBadge state={n.status} />
-                    {n.trust_score !== undefined && (
-                      <span className="text-soc-muted font-bold">{n.trust_score} pts</span>
-                    )}
-                  </div>
-                </div>
-              );
-            })}
+          <div className="-mx-2 aspect-[820/640] w-[calc(100%+1rem)]">
+            <TopologyGraph
+              nodes={topology.nodes}
+              links={topology.links}
+              selectedId={selectedNode?.id ?? null}
+              onSelect={(n) => setSelectedNode(n)}
+            />
           </div>
 
           {/* Observed Flow Edges Table */}
@@ -99,7 +70,7 @@ export const NetworkTopology: React.FC = () => {
             <h4 className="font-bold text-soc-dim text-[11px] uppercase tracking-wider">Observed Inter-Node Communications ({topology.links.length})</h4>
             <div className="space-y-1 max-h-40 overflow-y-auto">
               {topology.links.map((link, idx) => (
-                <div key={idx} className="p-2 bg-soc-bg rounded border border-soc-border flex items-center justify-between text-[11px]">
+                <div key={idx} className="p-2 inset-well flex items-center justify-between text-[11px]">
                   <div className="flex items-center gap-2">
                     <span className="text-soc-text font-bold">{link.source}</span>
                     <span className="text-soc-dim">⟷</span>
@@ -121,7 +92,7 @@ export const NetworkTopology: React.FC = () => {
         </div>
 
         {/* Node Inspector Drawer */}
-        <div className="bg-soc-card border border-soc-border rounded-lg p-5 space-y-4">
+        <div className="panel p-5 space-y-4">
           <h3 className="font-bold text-soc-text text-sm uppercase tracking-wider border-b border-soc-border pb-2">
             Node Telemetry Inspector
           </h3>
@@ -132,7 +103,7 @@ export const NetworkTopology: React.FC = () => {
                 <h4 className="text-sm font-bold text-soc-text">{selectedNode.label}</h4>
                 <p className="text-soc-dim">{selectedNode.ip}</p>
               </div>
-              <div className="bg-soc-bg rounded p-3 border border-soc-border space-y-2">
+              <div className="inset-well p-3 space-y-2">
                 <div className="flex justify-between">
                   <span className="text-soc-dim">Node Category:</span>
                   <span className="text-soc-text font-bold">{selectedNode.category}</span>

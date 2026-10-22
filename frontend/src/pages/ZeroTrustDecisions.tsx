@@ -27,7 +27,7 @@ export const ZeroTrustDecisions: React.FC = () => {
 
   return (
     <div className="space-y-4">
-      <div className="bg-soc-card border border-soc-border rounded-lg p-4 flex items-center justify-between">
+      <div className="page-head">
         <div>
           <h2 className="text-base font-bold text-soc-text font-mono flex items-center gap-2">
             <FileCheck2 className="w-4 h-4 text-blue-400" />
@@ -39,16 +39,16 @@ export const ZeroTrustDecisions: React.FC = () => {
         </div>
         <button
           onClick={fetchDecisions}
-          className="flex items-center gap-1.5 px-3 py-1.5 rounded bg-soc-bg hover:bg-soc-cardHover border border-soc-border text-xs font-mono text-soc-muted hover:text-soc-text transition-colors"
+          className="btn-ghost"
         >
           <RefreshCw className="w-3.5 h-3.5" /> Refresh Policies
         </button>
       </div>
 
-      <div className="bg-soc-card border border-soc-border rounded-lg overflow-hidden">
+      <div className="panel overflow-hidden">
         <div className="overflow-x-auto">
           <table className="w-full text-left text-xs font-mono">
-            <thead className="bg-soc-bg/90 border-b border-soc-border text-soc-dim text-[11px] uppercase tracking-wider select-none">
+            <thead className="thead-soc">
               <tr>
                 <th className="py-2.5 px-3">Decision ID</th>
                 <th className="py-2.5 px-3">Timestamp</th>

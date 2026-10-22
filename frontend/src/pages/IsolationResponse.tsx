@@ -58,7 +58,7 @@ export const IsolationResponse: React.FC = () => {
 
   return (
     <div className="space-y-4">
-      <div className="bg-soc-card border border-soc-border rounded-lg p-4 flex items-center justify-between">
+      <div className="page-head">
         <div>
           <h2 className="text-base font-bold text-soc-text font-mono flex items-center gap-2">
             <Lock className="w-4 h-4 text-rose-400" />
@@ -70,14 +70,14 @@ export const IsolationResponse: React.FC = () => {
         </div>
         <button
           onClick={fetchActions}
-          className="flex items-center gap-1.5 px-3 py-1.5 rounded bg-soc-bg hover:bg-soc-cardHover border border-soc-border text-xs font-mono text-soc-muted hover:text-soc-text transition-colors"
+          className="btn-ghost"
         >
           <RefreshCw className="w-3.5 h-3.5" /> Refresh Actions
         </button>
       </div>
 
       {/* Operator Execution Panel */}
-      <div className="bg-soc-card border border-soc-border rounded-lg p-4 font-mono text-xs">
+      <div className="panel p-4 font-mono text-xs">
         <h3 className="font-bold text-soc-text mb-3 uppercase tracking-wider text-[11px] flex items-center gap-1.5">
           <Radio className="w-3.5 h-3.5 text-blue-400" /> Operator Containment Console
         </h3>
@@ -88,7 +88,7 @@ export const IsolationResponse: React.FC = () => {
               type="text"
               value={targetIp}
               onChange={(e) => { setTargetIp(e.target.value); setPreview(null); }}
-              className="w-full bg-soc-bg border border-soc-border rounded px-3 py-1.5 text-soc-text focus:outline-none focus:border-blue-500"
+              className="w-full inset-well px-3 py-1.5 text-soc-text focus:outline-none focus:border-blue-500"
               placeholder="e.g. 192.168.1.188"
               required
             />
@@ -98,7 +98,7 @@ export const IsolationResponse: React.FC = () => {
             <select
               value={actionType}
               onChange={(e) => { setActionType(e.target.value as ResponseAction['action_type']); setPreview(null); }}
-              className="w-full bg-soc-bg border border-soc-border rounded px-3 py-1.5 text-soc-text focus:outline-none focus:border-blue-500"
+              className="w-full inset-well px-3 py-1.5 text-soc-text focus:outline-none focus:border-blue-500"
             >
               <option value="ISOLATE">ISOLATE (Full Quarantine)</option>
               <option value="RESTRICT">RESTRICT (Bandwidth / Port Limit)</option>
@@ -112,7 +112,7 @@ export const IsolationResponse: React.FC = () => {
               type="text"
               value={reason}
               onChange={(e) => { setReason(e.target.value); setPreview(null); }}
-              className="w-full bg-soc-bg border border-soc-border rounded px-3 py-1.5 text-soc-text focus:outline-none focus:border-blue-500"
+              className="w-full inset-well px-3 py-1.5 text-soc-text focus:outline-none focus:border-blue-500"
               placeholder="Operational justification"
               required
             />
@@ -131,7 +131,7 @@ export const IsolationResponse: React.FC = () => {
               disabled={isSubmitting}
               className={`flex-1 rounded px-3 py-1.5 font-bold transition-colors ${
                 actionType === 'RELEASE'
-                  ? 'bg-emerald-600 hover:bg-emerald-500 text-white'
+                  ? 'btn-signal'
                   : 'bg-rose-600 hover:bg-rose-500 text-white'
               }`}
             >
@@ -163,10 +163,10 @@ export const IsolationResponse: React.FC = () => {
       )}
 
       {/* Response Audit Table */}
-      <div className="bg-soc-card border border-soc-border rounded-lg overflow-hidden">
+      <div className="panel overflow-hidden">
         <div className="overflow-x-auto">
           <table className="w-full text-left text-xs font-mono">
-            <thead className="bg-soc-bg/90 border-b border-soc-border text-soc-dim text-[11px] uppercase tracking-wider select-none">
+            <thead className="thead-soc">
               <tr>
                 <th className="py-2.5 px-3">Action ID</th>
                 <th className="py-2.5 px-3">Target Entity</th>

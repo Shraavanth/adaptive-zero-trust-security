@@ -41,7 +41,7 @@ export const CaptureSessions: React.FC = () => {
 
   return (
     <div className="space-y-4 font-mono text-xs">
-      <div className="bg-soc-card border border-soc-border rounded-lg p-4 flex items-center justify-between">
+      <div className="page-head">
         <div>
           <h2 className="text-base font-bold text-soc-text flex items-center gap-2">
             <Radio className="w-4 h-4 text-blue-400" />
@@ -53,14 +53,14 @@ export const CaptureSessions: React.FC = () => {
         </div>
         <button
           onClick={fetchSessions}
-          className="flex items-center gap-1.5 px-3 py-1.5 rounded bg-soc-bg hover:bg-soc-cardHover border border-soc-border text-soc-muted hover:text-soc-text transition-colors"
+          className="btn-ghost"
         >
           <RefreshCw className="w-3.5 h-3.5" /> Refresh Sessions
         </button>
       </div>
 
       {/* PCAP Upload Section */}
-      <div className="bg-soc-card border border-soc-border rounded-lg p-4 space-y-2">
+      <div className="panel p-4 space-y-2">
         <h3 className="font-bold text-soc-text text-sm uppercase tracking-wider flex items-center gap-2">
           <Upload className="w-4 h-4 text-blue-400" /> Offline PCAP / PCAPNG Replay Ingestion
         </h3>
@@ -69,7 +69,7 @@ export const CaptureSessions: React.FC = () => {
         </p>
 
         <div className="flex items-center gap-3 pt-2">
-          <label className="px-4 py-2 rounded bg-blue-600 hover:bg-blue-500 text-white font-bold cursor-pointer transition-colors inline-flex items-center gap-2">
+          <label className="px-4 py-2 rounded btn-signal font-bold cursor-pointer transition-colors inline-flex items-center gap-2">
             <Upload className="w-3.5 h-3.5" /> Select PCAP File
             <input
               type="file"
@@ -84,10 +84,10 @@ export const CaptureSessions: React.FC = () => {
       </div>
 
       {/* Session History Table */}
-      <div className="bg-soc-card border border-soc-border rounded-lg overflow-hidden">
+      <div className="panel overflow-hidden">
         <div className="overflow-x-auto">
           <table className="w-full text-left">
-            <thead className="bg-soc-bg/90 border-b border-soc-border text-soc-dim text-[11px] uppercase tracking-wider select-none">
+            <thead className="thead-soc">
               <tr>
                 <th className="py-2.5 px-3">Session ID</th>
                 <th className="py-2.5 px-3">Mode</th>
