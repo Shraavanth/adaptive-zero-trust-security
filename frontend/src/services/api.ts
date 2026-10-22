@@ -22,7 +22,8 @@ import {
   ResponsePreview
 } from '../types';
 
-const API_BASE = '/api';
+const RAW_API_URL = (import.meta.env.VITE_API_URL || import.meta.env.VITE_API_BASE_URL || '/api').trim().replace(/\/+$/, '');
+export const API_BASE = RAW_API_URL.endsWith('/api') ? RAW_API_URL : (RAW_API_URL === '' ? '/api' : `${RAW_API_URL}/api`);
 
 export async function fetchJson<T>(url: string, options?: RequestInit): Promise<T> {
   const res = await fetch(url, options);

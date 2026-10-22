@@ -11,7 +11,7 @@ import {
   SlidersHorizontal,
   Info
 } from 'lucide-react';
-import { api } from '../services/api';
+import { api, API_BASE } from '../services/api';
 import { Packet } from '../types';
 import { PacketDrawer } from '../components/PacketDrawer';
 import { ModeBadge } from '../components/Badge';
@@ -89,7 +89,7 @@ export const LiveMonitor: React.FC<LiveMonitorProps> = ({ packets: streamPackets
   };
 
   const handleExport = (format: 'csv' | 'json') => {
-    window.open(`/api/packets/export/data?format=${format}&limit=500`, '_blank');
+    window.open(`${API_BASE}/packets/export/data?format=${format}&limit=500`, '_blank');
   };
 
   const handleToggleMask = async () => {
