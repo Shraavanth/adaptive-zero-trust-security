@@ -1,23 +1,37 @@
+```python
 import os
 from pathlib import Path
-from pydantic import BaseModel, Field
+from pydantic import BaseModel
 
 # Base directory for the backend
 BASE_DIR = Path(__file__).resolve().parent.parent.parent
 WORKSPACE_DIR = BASE_DIR.parent
-DATA_DIR = WORKSPACE_DIR / "data"
-LOGS_DIR = WORKSPACE_DIR / "logs"
-REPORTS_DIR = WORKSPACE_DIR / "reports"
 
-DATA_DIR.mkdir(parents=True, exist_ok=True)
-LOGS_DIR.mkdir(parents=True, exist_ok=True)
-REPORTS_DIR.mkdir(parents=True, exist_ok=True)
+# Vercel functions have a read-only filesystem except for /tmp.
+IS_VERCEL = os.getenv("VERCEL") == "1"
+
+if IS_VERCEL:
+    DATA_DIR = Path("/tmp/zero-trust-data")
+    LOGS_DIR = Path("/tmp/zero-trust-logs")
+    REPORTS_DIR = Path("/tmp/zero-trust-reports")
+else:
+    DATA_DIR = WORKSPACE_DIR / "data"
+    LOGS_DIR = WORKSPACE_DIR / "logs"
+    REPORTS_DIR = WORKSPACE_DIR / "reports"
+
+# Create directories
+for directory in (DATA_DIR, LOGS_DIR, REPORTS_DIR):
+    directory.mkdir(parents=True, exist_ok=True)
+
 
 class Settings(BaseModel):
     APP_NAME: str = "Adaptive Zero Trust"
-    TAGLINE: str = "Real-Time Network Threat Detection, Dynamic Trust and Intelligent Response"
+    TAGLINE: str = (
+        "Real-Time Network Threat Detection, Dynamic Trust "
+        "and Intelligent Response"
+    )
     VERSION: str = "1.0.0"
-    DEBUG: bool = True
+    DEBUG: bool = False
     HOST: str = "127.0.0.1"
     PORT: int = 8000
 
@@ -26,8 +40,10 @@ class Settings(BaseModel):
     DATABASE_URL: str = f"sqlite:///{DATABASE_PATH.as_posix()}"
 
     # Capture Settings
-    DEFAULT_CAPTURE_MODE: str = "SIMULATED_TEST"  # LIVE_CAPTURE, OFFLINE_REPLAY, CONTROLLED_LAB, SIMULATED_TEST
-    TSHARK_DEFAULT_PATH: str = r"C:\Program Files\Wireshark\tshark.exe"
+    DEFAULT_CAPTURE_MODE: str = "SIMULATED_TEST"
+    TSHARK_DEFAULT_PATH: str = (
+        r"C:\Program Files\Wireshark\tshark.exe"
+    )
     PACKET_BUFFER_LIMIT: int = 5000
 
     # Trust Scoring Rules
@@ -38,29 +54,30 @@ class Settings(BaseModel):
     PENALTY_ARP_SPOOFING: int = 30
 
     # Trust Score Bands
-    TRUSTED_THRESHOLD: int = 80   # 80 - 100: TRUSTED
-    MONITOR_THRESHOLD: int = 60   # 60 - 79: MONITOR
-    RESTRICT_THRESHOLD: int = 30  # 30 - 59: RESTRICT
-    # 0 - 29: ISOLATE
+    TRUSTED_THRESHOLD: int = 80
+    MONITOR_THRESHOLD: int = 60
+    RESTRICT_THRESHOLD: int = 30
 
     # Behavior-Risk Thresholds
-    RISK_ISOLATE_THRESHOLD: int = 70  # Risk score >= 70 triggers immediate isolation override
+    RISK_ISOLATE_THRESHOLD: int = 70
 
     # Self-Healing Prerequisites
-    RECOVERY_CLEAN_WINDOW_SECONDS: int = 300  # 5 minutes without malicious event
+    RECOVERY_CLEAN_WINDOW_SECONDS: int = 300
     RECOVERY_MIN_TRUST_SCORE: int = 80
     RECOVERY_MAX_RISK_SCORE: int = 69
     AUTO_HEALING_ENABLED: bool = True
 
-    # Security & Lab controls
-    AUTHORIZED_RESPONSE_MODE: str = "SIMULATED"  # SIMULATED (default) or AUTHORIZED_LAB
+    # Security and Lab Controls
+    AUTHORIZED_RESPONSE_MODE: str = "SIMULATED"
+
     ALLOWED_ORIGINS: list[str] = [
         "http://localhost:5173",
         "http://127.0.0.1:5173",
         "http://localhost:3000",
         "http://127.0.0.1:3000",
         "http://localhost:8000",
-        "http://127.0.0.1:8000"
+        "http://127.0.0.1:8000",
     ]
+
 
 settings = Settings()
